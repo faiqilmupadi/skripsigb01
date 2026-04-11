@@ -1,0 +1,272 @@
+/* styles/manajemenAkun.module.css */
+
+/* ===== Page ===== */
+.wrap {
+  padding: 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  opacity: 0.72;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: #b42318;
+  background: rgba(180, 35, 24, 0.08);
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  padding: 10px 12px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btnPrimary {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btnGhost {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+}
+
+/* ===== Card/Table Container ===== */
+.card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 980px; /* biar kolom gak dempet */
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: #fafafa;
+  z-index: 1;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(0, 0, 0, 0.65);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.table th,
+.table td {
+  padding: 14px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.045);
+}
+
+/* kolom yang panjang (email) jangan wrap aneh */
+.colId {
+  width: 120px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.colEmail {
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+.colRole {
+  min-width: 160px;
+  white-space: nowrap;
+}
+
+.colDate {
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+.thActions,
+.tdActions {
+  text-align: right;
+  white-space: nowrap;
+  width: 140px;
+}
+
+/* ===== Buttons small ===== */
+.btnSmall {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.btnSmallDanger {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(180, 35, 24, 0.35);
+  background: rgba(180, 35, 24, 0.06);
+  cursor: pointer;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+/* ===== Empty state ===== */
+.empty {
+  padding: 18px;
+  opacity: 0.75;
+}
+
+/* ===== Modal ===== */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35); /* lebih soft */
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 50;
+}
+
+.modal {
+  width: min(720px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #ffffff; /* biar kebaca */
+  padding: 16px 16px 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.btnIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #fff;
+  cursor: pointer;
+}
+
+.alertError {
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  background: rgba(180, 35, 24, 0.06);
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  color: #7a1b12;
+  font-weight: 600;
+}
+
+/* form grid lebih rapi */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.72);
+  font-weight: 650;
+}
+
+.input {
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #fff;
+  outline: none;
+}
+
+.input:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.modalText {
+  margin: 10px 0 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-weight: 600;
+}
+
+/* responsive: kalau layar sempit, form jadi 1 kolom */
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
