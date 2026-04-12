@@ -1,90 +1,62 @@
-// app/features/katalogBarang/types.ts
 import { z } from "zod";
 
+export type TransformRow = {
+  qtyFrom: number;
+  eumFrom: string;
+  qtyTo: number;
+  eumTo: string;
+};
+
 export type KatalogBarangRow = {
-  partNumber: string;
-  plant: string;
-  freeStock: number; // dari material_stock
-  materialDescription: string;
-  baseUnitOfMeasure: string;
-  reorderPoint: number; // dari material_plant_data
-  safetyStock: number; // dari material_plant_data
-  materialGroup: string | null;
-  createdBy: string | null;
-  createdOn: string; // ISO
+  kodeBarang: string;
+  namaBarang: string;
+  leadtime: number;
+  safetyStock: number;
+  volume: number | null;
+  satuan: string | null;
+  jenisBarang: string | null;
+  baseOfMeasure: string | null;
+  warna: string | null;
+  allTransforms?: TransformRow[];
 };
 
 export type CreateBarangInput = {
-  partNumber: string;
-  plant: string;
-  materialDescription: string;
-  baseUnitOfMeasure: string;
-  reorderPoint: number;
+  kodeBarang: string;
+  namaBarang: string;
+  leadtime: number;
   safetyStock: number;
-  materialGroup?: string | null;
+  volume?: number | null;
+  satuan?: string | null;
+  jenisBarang?: string | null;
+  baseOfMeasure?: string | null;
+  warna?: string | null;
+  transforms?: TransformRow[];
 };
 
-/**
- * ✅ Sesuai request:
- * - partNumber tidak bisa diedit
- * - semua selain partNumber boleh diedit (termasuk plant)
- */
-export type UpdateBarangInput = Partial<Omit<CreateBarangInput, "partNumber">>;
+export type UpdateBarangInput = Partial<Omit<CreateBarangInput, "kodeBarang">>;
 
 // ====== Zod helpers ======
 const trimStr = (min: number, max: number, label = "Field") =>
-  z
-    .string()
-    .trim()
-    .min(min, { message: `${label} wajib diisi` })
-    .max(max, { message: `${label} maksimal ${max} karakter` });
+  z.string().trim().min(min, { message: `${label} wajib diisi` }).max(max, { message: `${label} maksimal ${max} karakter` });
 
-/**
- * ✅ Angka boleh 0, tidak boleh negatif.
- * Pakai coerce agar input string dari client tetap bisa divalidasi.
- */
 const nonNegNum = (label: string) =>
-  z.coerce
-    .number()
-    .finite({ message: `${label} harus angka valid` })
-    .min(0, { message: `${label} tidak boleh negatif` });
+  z.coerce.number().finite({ message: `${label} harus angka valid` }).min(0, { message: `${label} tidak boleh negatif` });
 
-// ====== Zod ======
-export const CreateBarangSchema = z.object({
-  partNumber: trimStr(1, 50, "Part Number"),
-  plant: trimStr(1, 20, "Plant"),
-  materialDescription: trimStr(1, 255, "Material Description"),
-  baseUnitOfMeasure: trimStr(1, 20, "Base Unit Of Measure"),
-
-  reorderPoint: nonNegNum("ROP"),
-  safetyStock: nonNegNum("Safety Stock"),
-
-  materialGroup: z
-    .string()
-    .trim()
-    .max(100, { message: "Material Group maksimal 100 karakter" })
-    .optional()
-    .nullable(),
+const TransformSchema = z.object({
+  qtyFrom: z.coerce.number().min(0),
+  eumFrom: z.string().trim().min(1),
+  qtyTo: z.coerce.number().min(0),
+  eumTo: z.string().trim().min(1),
 });
 
-export const UpdateBarangSchema = z
-  .object({
-    // ✅ plant boleh diedit
-    plant: trimStr(1, 20, "Plant").optional(),
-
-    materialDescription: trimStr(1, 255, "Material Description").optional(),
-    baseUnitOfMeasure: trimStr(1, 20, "Base Unit Of Measure").optional(),
-
-    reorderPoint: nonNegNum("ROP").optional(),
-    safetyStock: nonNegNum("Safety Stock").optional(),
-
-    materialGroup: z
-      .string()
-      .trim()
-      .max(100, { message: "Material Group maksimal 100 karakter" })
-      .optional()
-      .nullable(),
-  })
-  .refine((v) => Object.keys(v).length > 0, {
-    message: "Minimal 1 field diubah",
-  });
+// 2. Gunakan di dalam CreateBarangSchema
+export const CreateBarangSchema = z.object({
+  kodeBarang: z.string().trim().min(1, "Kode wajib diisi"),
+  namaBarang: z.string().trim().min(1, "Nama wajib diisi"),
+  leadtime: z.coerce.number().min(0),
+  safetyStock: z.coerce.number().min(0),
+  baseOfMeasure: z.string().trim().min(1, "Satuan dasar wajib diisi"),
+  warna: z.string().optional().nullable(),
+  // INI KUNCINYA: transforms harus array
+  transforms: z.array(TransformSchema).optional(), 
+});

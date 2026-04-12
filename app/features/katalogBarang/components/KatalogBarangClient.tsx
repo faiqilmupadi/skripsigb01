@@ -1,4 +1,3 @@
-// app/features/katalogBarang/components/KatalogBarangClient.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -20,30 +19,22 @@ export default function KatalogBarangClient() {
 
   const headerText = useMemo(() => {
     if (loading) return "Memuat data…";
-    return `Total barang: ${rows.length}`;
+    return `Total master barang terdaftar: ${rows.length}`;
   }, [loading, rows.length]);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Katalog Barang</h1>
+          <h1 className={styles.title}>Katalog Barang (Master)</h1>
           <p className={styles.subtitle}>{headerText}</p>
           {error ? <p className={styles.error}>{error}</p> : null}
         </div>
 
         <div className={styles.actions}>
-          <button
-            className={styles.btnPrimary}
-            onClick={() => {
-              setEditing(null);
-              setOpenForm(true);
-            }}
-            type="button"
-          >
-            + Tambah Barang
+          <button className={styles.btnPrimary} onClick={() => { setEditing(null); setOpenForm(true); }} type="button">
+            + Pendaftaran Barang
           </button>
-
           <button className={styles.btnGhost} onClick={actions.refresh} disabled={loading} type="button">
             Refresh
           </button>
@@ -54,38 +45,33 @@ export default function KatalogBarangClient() {
         <KatalogBarangTable
           rows={rows}
           loading={loading}
-          onEdit={(row) => {
-            setEditing(row);
-            setOpenForm(true);
-          }}
-          onDelete={(row) => {
-            setDeleting(row);
-            setOpenDelete(true);
-          }}
+          onEdit={(row) => { setEditing(row); setOpenForm(true); }}
+          onDelete={(row) => { setDeleting(row); setOpenDelete(true); }}
         />
       </div>
 
-      <BarangFormModal
-        open={openForm}
-        mode={editing ? "edit" : "create"}
-        initial={editing}
-        onClose={() => setOpenForm(false)}
-        onSubmit={async (payload) => {
-          if (editing) {
-            await actions.update(editing.partNumber, editing.plant, payload as any);
-          } else {
-            await actions.create(payload as any);
-          }
-          setOpenForm(false);
-        }}
-      />
+        <BarangFormModal
+          open={openForm}
+          mode={editing ? "edit" : "create"}
+          initial={editing}
+          onClose={() => setOpenForm(false)}
+          onSubmit={async (payload) => {
+            if (editing) {
+              // HAPUS editing.kodeVendor dari sini
+              await actions.update(editing.kodeBarang, payload as any); 
+            } else {
+              await actions.create(payload as any);
+            }
+            setOpenForm(false);
+          }}
+        />
 
       <ConfirmDeleteBarangModal
         open={openDelete}
-        label={deleting ? `${deleting.partNumber} (${deleting.plant})` : ""}
+        label={deleting ? deleting.namaBarang : ""}
         onClose={() => setOpenDelete(false)}
         onConfirm={async () => {
-          if (deleting) await actions.remove(deleting.partNumber, deleting.plant);
+          if (deleting) await actions.remove(deleting.kodeBarang);
           setOpenDelete(false);
         }}
       />

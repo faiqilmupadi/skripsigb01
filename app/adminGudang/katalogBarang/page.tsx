@@ -1,4 +1,4 @@
-// app/kepalaGudang/katalogBarang/page.tsx
+// app/adminGudang/katalogBarang/page.tsx
 import KatalogBarangClient from "@/app/features/katalogBarang/components/KatalogBarangClient";
 
 export default function Page() {

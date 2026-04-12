@@ -1,4 +1,3 @@
-// app/features/katalogBarang/hooks/useKatalogBarang.ts
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -23,31 +22,23 @@ export function useKatalogBarang() {
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
 
-  const actions = useMemo(
-    () => ({
-      refresh,
-
-      async create(payload: CreateBarangInput) {
-        await katalogBarangClient.create(payload);
-        await refresh();
-      },
-
-      async update(partNumber: string, plant: string, payload: UpdateBarangInput) {
-        await katalogBarangClient.update(partNumber, plant, payload);
-        await refresh();
-      },
-
-      async remove(partNumber: string, plant: string) {
-        await katalogBarangClient.remove(partNumber, plant);
-        await refresh();
-      },
-    }),
-    [refresh]
-  );
+  const actions = useMemo(() => ({
+    refresh,
+    async create(payload: CreateBarangInput) {
+      await katalogBarangClient.create(payload);
+      await refresh();
+    },
+  async update(kodeBarang: string, payload: UpdateBarangInput) {
+    await katalogBarangClient.update(kodeBarang, payload);
+    await refresh();
+  },
+    async remove(kodeBarang: string) {
+      await katalogBarangClient.remove(kodeBarang);
+      await refresh();
+    },
+  }), [refresh]);
 
   return { rows, loading, error, actions };
 }

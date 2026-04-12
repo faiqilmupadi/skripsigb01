@@ -18,9 +18,7 @@ function pickIssueMessage(issues: any): string | null {
 
 async function ensureOk<T>(res: Response): Promise<T> {
   let json: ApiRes<T> | null = null;
-  try {
-    json = (await res.json()) as ApiRes<T>;
-  } catch {}
+  try { json = (await res.json()) as ApiRes<T>; } catch {}
 
   if (!res.ok || !json || (json as any).ok !== true) {
     const base = (json && (json as ApiErr).message) || `Request gagal (${res.status})`;
@@ -29,19 +27,16 @@ async function ensureOk<T>(res: Response): Promise<T> {
   }
   return (json as ApiOk<T>).data;
 }
-
-function makeKey(partNumber: string, plant: string) {
-  return `${partNumber}__${plant}`;
-}
+// makeKey SUDAH DIHAPUS karena kita pakai kodeBarang langsung
 
 export const katalogBarangClient = {
   async list(): Promise<KatalogBarangRow[]> {
-    const res = await fetch("/api/kepalaGudang/katalogBarang", { cache: "no-store" });
+    const res = await fetch("/api/adminGudang/katalogBarang", { cache: "no-store" });
     return ensureOk<KatalogBarangRow[]>(res);
   },
 
   async create(payload: CreateBarangInput): Promise<KatalogBarangRow> {
-    const res = await fetch("/api/kepalaGudang/katalogBarang", {
+    const res = await fetch("/api/adminGudang/katalogBarang", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -49,9 +44,9 @@ export const katalogBarangClient = {
     return ensureOk<KatalogBarangRow>(res);
   },
 
-  async update(partNumber: string, plant: string, payload: UpdateBarangInput): Promise<KatalogBarangRow> {
-    const key = makeKey(partNumber, plant);
-    const res = await fetch(`/api/kepalaGudang/katalogBarang/${encodeURIComponent(key)}`, {
+  async update(kodeBarang: string, payload: UpdateBarangInput): Promise<KatalogBarangRow> {
+    // Pastikan URL ini sesuai dengan nama folder [kodeBarang]
+    const res = await fetch(`/api/adminGudang/katalogBarang/${encodeURIComponent(kodeBarang)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -59,9 +54,8 @@ export const katalogBarangClient = {
     return ensureOk<KatalogBarangRow>(res);
   },
 
-  async remove(partNumber: string, plant: string): Promise<void> {
-    const key = makeKey(partNumber, plant);
-    const res = await fetch(`/api/kepalaGudang/katalogBarang/${encodeURIComponent(key)}`, {
+  async remove(kodeBarang: string): Promise<void> {
+    const res = await fetch(`/api/adminGudang/katalogBarang/${encodeURIComponent(kodeBarang)}`, {
       method: "DELETE",
     });
     await ensureOk<unknown>(res);

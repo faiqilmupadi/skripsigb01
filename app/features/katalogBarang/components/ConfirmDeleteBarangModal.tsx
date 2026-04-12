@@ -4,6 +4,7 @@
 import { useState } from "react";
 import styles from "@/styles/manajemenAkun.module.css";
 
+// Pastikan tipe Props ini memiliki 'open'
 type Props = {
   open: boolean;
   label: string;

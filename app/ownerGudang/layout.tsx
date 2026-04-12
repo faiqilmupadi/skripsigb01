@@ -1,4 +1,4 @@
-// app/kepalaGudang/layout.tsx
+// app/ownerGudang/layout.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -8,16 +8,15 @@ import styles from "@/styles/dashboardAnalisis.module.css";
 import AppSidebar, { SidebarIcons } from "@/app/components/shared/AppSidebar";
 import { logout } from "@/app/services/logoutService";
 
-export default function KepalaGudangLayout({ children }: { children: React.ReactNode }) {
+export default function ownerGudangLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   const sidebarItems = useMemo(
     () => [
-      { label: "Dashboard Analisis", href: "/kepalaGudang/dashboardAnalisis" as const, icon: SidebarIcons.Home },
-      { label: "Manajemen Akun", href: "/kepalaGudang/manajemenAkun" as const, icon: SidebarIcons.User },
-      { label: "Katalog Barang", href: "/kepalaGudang/katalogBarang" as const, icon: SidebarIcons.Box },
-      { label: "HistoryOrder", href: "/kepalaGudang/historyOrder" as const, icon: SidebarIcons.History },
+      { label: "Dashboard Analisis", href: "/ownerGudang/dashboardAnalisis" as const, icon: SidebarIcons.Home },
+      { label: "Manajemen Akun", href: "/ownerGudang/manajemenAkun" as const, icon: SidebarIcons.User },
+      { label: "HistoryOrder", href: "/ownerGudang/historyOrder" as const, icon: SidebarIcons.History },
     ],
     []
   );

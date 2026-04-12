@@ -1,73 +1,28 @@
-// app/features/katalogBarang/components/BarangFormModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import styles from "@/styles/manajemenAkun.module.css";
-import type {
-  CreateBarangInput,
-  KatalogBarangRow,
-  UpdateBarangInput,
-} from "@/app/features/katalogBarang/types";
-
-type Mode = "create" | "edit";
+import type { KatalogBarangRow } from "@/app/features/katalogBarang/types";
 
 type Props = {
   open: boolean;
-  mode: Mode;
+  mode: "create" | "edit";
   initial: KatalogBarangRow | null;
   onClose: () => void;
-  onSubmit: (payload: CreateBarangInput | UpdateBarangInput) => Promise<void>;
+  onSubmit: (payload: any) => Promise<void>;
 };
 
-/**
- * Sanitizer: hanya boleh angka + 1 titik desimal.
- * - TIDAK mengizinkan tanda minus
- * - menghapus karakter selain digit dan '.'
- * - jika banyak '.', sisakan yang pertama
- */
-function sanitizeNonNegativeDecimal(raw: string) {
-  let s = String(raw ?? "").replaceAll("-", ""); // block minus
-  s = s.replace(/[^\d.]/g, ""); // only digits + dot
+export default function BarangFormModal({ open, mode, initial, onClose, onSubmit }: Props) {
+  const [formData, setFormData] = useState({
+    kodeBarang: "",
+    namaBarang: "",
+    baseOfMeasure: "",
+    warna: "",
+    leadtime: "",
+    safetyStock: ""
+  });
 
-  const firstDot = s.indexOf(".");
-  if (firstDot >= 0) {
-    s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
-  }
-
-  // kalau user kosongin input, BIARKAN kosong
-  if (s === "") return "";
-
-  // prevent leading dot -> "0."
-  if (s.startsWith(".")) s = "0" + s;
-
-  return s;
-}
-
-
-function toNonNegNumberOrThrow(label: string, raw: string) {
-  const s = String(raw ?? "").trim();
-  if (s === "") throw new Error(`${label} wajib diisi`); // ✅ wajib diisi
-  const n = Number(s);
-  if (!Number.isFinite(n) || Number.isNaN(n)) throw new Error(`${label} harus angka`);
-  if (n < 0) throw new Error(`${label} harus angka >= 0`);
-  return n;
-}
-
-export default function BarangFormModal({
-  open,
-  mode,
-  initial,
-  onClose,
-  onSubmit,
-}: Props) {
-  const [partNumber, setPartNumber] = useState("");
-  const [plant, setPlant] = useState("");
-  const [materialDescription, setMaterialDescription] = useState("");
-  const [baseUnitOfMeasure, setBaseUnitOfMeasure] = useState("");
-  const [reorderPoint, setReorderPoint] = useState("");
-  const [safetyStock, setSafetyStock] = useState("");
-  const [materialGroup, setMaterialGroup] = useState("");
-
+  const [transforms, setTransforms] = useState([{ qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -76,109 +31,118 @@ export default function BarangFormModal({
     setErr(null);
 
     if (mode === "edit" && initial) {
-      setPartNumber(initial.partNumber);
-      setPlant(initial.plant);
-      setMaterialDescription(initial.materialDescription);
-      setBaseUnitOfMeasure(initial.baseUnitOfMeasure);
-      setReorderPoint(
-        initial.reorderPoint === null || initial.reorderPoint === undefined
-          ? ""
-          : String(initial.reorderPoint)
-      );
-      setSafetyStock(
-        initial.safetyStock === null || initial.safetyStock === undefined
-          ? ""
-          : String(initial.safetyStock)
-      );
-      setMaterialGroup(initial.materialGroup ?? "");
+      setFormData({
+        kodeBarang: initial.kodeBarang,
+        namaBarang: initial.namaBarang,
+        baseOfMeasure: initial.baseOfMeasure || "",
+        warna: initial.warna || "",
+        leadtime: String(initial.leadtime || ""),
+        safetyStock: String(initial.safetyStock || "")
+      });
+
+      const existing = initial.allTransforms || [];
+      if (existing.length > 0) {
+        setTransforms(existing.map((t: any) => ({
+          qtyFrom: String(t.qtyFrom),
+          eumFrom: t.eumFrom,
+          qtyTo: String(t.qtyTo),
+          eumTo: t.eumTo
+        })));
+      } else {
+        setTransforms([{ qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]);
+      }
     } else {
-      setPartNumber("");
-      setPlant("");
-      setMaterialDescription("");
-      setBaseUnitOfMeasure("");
-      setReorderPoint("");
-      setSafetyStock("");
-      setMaterialGroup("");
+      setFormData({
+        kodeBarang: "",
+        namaBarang: "",
+        baseOfMeasure: "",
+        warna: "",
+        leadtime: "",
+        safetyStock: ""
+      });
+      setTransforms([{ qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]);
     }
   }, [open, mode, initial]);
+
+  const addTransform = () => setTransforms([...transforms, { qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]);
+  const removeTransform = (idx: number) => setTransforms(transforms.filter((_, i) => i !== idx));
+  const updateTransform = (idx: number, field: string, val: string) => {
+    const next = [...transforms];
+    (next[idx] as any)[field] = val;
+    setTransforms(next);
+  };
 
   if (!open) return null;
 
   return (
     <div className={styles.modalBackdrop} onMouseDown={onClose}>
-      <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
+      <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()} style={{ maxWidth: '750px' }}>
         <div className={styles.modalHeader}>
-          <h3>{mode === "edit" ? "Edit Barang" : "Tambah Barang"}</h3>
-          <button
-            className={styles.btnIcon}
-            onClick={onClose}
-            aria-label="Close"
-            type="button"
-          >
-            ✕
-          </button>
+          <h3>{mode === "edit" ? "Edit Katalog Barang" : "Pendaftaran Barang Baru"}</h3>
+          <button className={styles.btnIcon} onClick={onClose} type="button">✕</button>
         </div>
 
-        {err ? <div className={styles.alertError}>{err}</div> : null}
+        {err && <div className={styles.alertError} style={{ color: 'red', padding: '10px' }}>{err}</div>}
 
-        <div className={styles.formGrid}>
+        <div className={styles.formGrid} style={{ maxHeight: '65vh', overflowY: 'auto', padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+
+          <div style={{ gridColumn: "1/-1", fontWeight: 'bold', borderBottom: '2px solid #f0f0f0', paddingBottom: '5px' }}>
+            Data Master Barang
+          </div>
+
           <label className={styles.label}>
-            Part Number
+            Kode Barang
             <input
               className={styles.input}
-              value={partNumber}
-              onChange={(e) => setPartNumber(e.target.value)}
-              disabled={mode === "edit"} // ✅ partNumber tidak boleh diubah
-              placeholder="contoh: PN001"
+              value={formData.kodeBarang}
+              onChange={e => setFormData({ ...formData, kodeBarang: e.target.value })}
+              disabled={mode === "edit"}
+              placeholder="BRG-001"
             />
           </label>
 
           <label className={styles.label}>
-            Plant
+            Nama Barang
             <input
               className={styles.input}
-              value={plant}
-              onChange={(e) => setPlant(e.target.value)}
-              // ✅ boleh diedit juga saat edit (sesuai request)
-              placeholder="contoh: AKSI"
-            />
-          </label>
-
-          <label className={styles.label} style={{ gridColumn: "1 / -1" }}>
-            Material Description
-            <input
-              className={styles.input}
-              value={materialDescription}
-              onChange={(e) => setMaterialDescription(e.target.value)}
+              value={formData.namaBarang}
+              onChange={e => setFormData({ ...formData, namaBarang: e.target.value })}
+              placeholder="Laptop Asus..."
             />
           </label>
 
           <label className={styles.label}>
-            Base Unit Of Measure
+            Satuan Dasar (EuM)
             <input
               className={styles.input}
-              value={baseUnitOfMeasure}
-              onChange={(e) => setBaseUnitOfMeasure(e.target.value)}
+              value={formData.baseOfMeasure}
+              onChange={e => setFormData({ ...formData, baseOfMeasure: e.target.value })}
+              placeholder="Pcs / Dus"
             />
           </label>
 
           <label className={styles.label}>
-            Material Group
+            Warna
             <input
               className={styles.input}
-              value={materialGroup}
-              onChange={(e) => setMaterialGroup(e.target.value)}
+              value={formData.warna}
+              onChange={e => setFormData({ ...formData, warna: e.target.value })}
+              placeholder="Hitam"
             />
           </label>
 
+          <div style={{ gridColumn: "1/-1", fontWeight: 'bold', borderBottom: '2px solid #f0f0f0', paddingBottom: '5px', marginTop: '10px' }}>
+            Reorder Point (ROP)
+          </div>
+
           <label className={styles.label}>
-            ROP
+            Leadtime (Hari)
             <input
               className={styles.input}
-              value={reorderPoint}
-              onChange={(e) => setReorderPoint(sanitizeNonNegativeDecimal(e.target.value))}
-              inputMode="decimal"
-              placeholder="contoh: 0 atau 5"
+              type="number"
+              value={formData.leadtime}
+              onChange={e => setFormData({ ...formData, leadtime: e.target.value })}
+              placeholder="7"
             />
           </label>
 
@@ -186,87 +150,113 @@ export default function BarangFormModal({
             Safety Stock
             <input
               className={styles.input}
-              value={safetyStock}
-              onChange={(e) => setSafetyStock(sanitizeNonNegativeDecimal(e.target.value))}
-              inputMode="decimal"
-              placeholder="contoh: 0 atau 5"
+              type="number"
+              value={formData.safetyStock}
+              onChange={e => setFormData({ ...formData, safetyStock: e.target.value })}
+              placeholder="10"
             />
           </label>
 
-          <div className={styles.hint} style={{ gridColumn: "1 / -1" }}>
-            *Jumlah (freeStock) tidak diinput manual. Otomatis dari tabel stock.
+          <div style={{ gridColumn: "1/-1", display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px', background: '#f8f9fa', padding: '10px', borderRadius: '8px' }}>
+            <span style={{ fontWeight: 'bold' }}>Transformasi Satuan (Opsional)</span>
+            <button type="button" onClick={addTransform} style={{ padding: '5px 15px', cursor: 'pointer', borderRadius: '6px', border: '1px solid #28a745', color: '#28a745', background: '#fff' }}>
+              + Tambah Baris
+            </button>
           </div>
+
+          {/* Bagian Loop Transformasi */}
+          {transforms.map((t, i) => (
+            <div
+              key={i}
+              style={{
+                gridColumn: "1/-1",
+                padding: '15px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '10px',
+                background: '#fafafa',
+                position: 'relative',
+                marginBottom: '10px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>Konversi #{i + 1}</span>
+                {transforms.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeTransform(i)}
+                    style={{ border: 'none', background: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    ✕ Hapus
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div style={{ gridColumn: "1/-1", fontSize: '11px', color: '#888', textTransform: 'uppercase' }}>Dari Satuan Besar</div>
+                <label className={styles.label}>
+                  Qty
+                  <input
+                    className={styles.input}
+                    type="number"
+                    value={t.qtyFrom}
+                    onChange={e => updateTransform(i, 'qtyFrom', e.target.value)}
+                    placeholder="Contoh: 1"
+                  />
+                </label>
+                <label className={styles.label}>
+                  Satuan
+                  <input
+                    className={styles.input}
+                    value={t.eumFrom}
+                    onChange={e => updateTransform(i, 'eumFrom', e.target.value)}
+                    placeholder="Contoh: Dus"
+                  />
+                </label>
+
+                <div style={{ gridColumn: "1/-1", fontSize: '11px', color: '#888', textTransform: 'uppercase', marginTop: '5px' }}>Menjadi Satuan Kecil</div>
+                <label className={styles.label}>
+                  Qty
+                  <input
+                    className={styles.input}
+                    type="number"
+                    value={t.qtyTo}
+                    onChange={e => updateTransform(i, 'qtyTo', e.target.value)}
+                    placeholder="Contoh: 12"
+                  />
+                </label>
+                <label className={styles.label}>
+                  Satuan
+                  <input
+                    className={styles.input}
+                    value={t.eumTo}
+                    onChange={e => updateTransform(i, 'eumTo', e.target.value)}
+                    placeholder="Contoh: Pcs"
+                  />
+                </label>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className={styles.modalFooter}>
-          <button
-            className={styles.btnGhost}
-            onClick={onClose}
-            disabled={saving}
-            type="button"
-          >
-            Batal
-          </button>
-
+        <div className={styles.modalFooter} style={{ padding: '20px', borderTop: '1px solid #eee' }}>
+          <button className={styles.btnGhost} onClick={onClose} disabled={saving} type="button">Batal</button>
           <button
             className={styles.btnPrimary}
-            disabled={saving}
-            type="button"
             onClick={async () => {
               setSaving(true);
-              setErr(null);
-
               try {
-                const pn = partNumber.trim();
-                const pl = plant.trim();
-
-                if (mode === "create") {
-                  if (!pn) throw new Error("Part Number wajib diisi");
-                }
-                // ✅ plant wajib untuk create & edit (karena boleh diedit)
-                if (!pl) throw new Error("Plant wajib diisi");
-
-                if (!materialDescription.trim()) throw new Error("Material wajib diisi");
-                if (!baseUnitOfMeasure.trim()) throw new Error("Satuan wajib diisi");
-
-                const rop = toNonNegNumberOrThrow("ROP", reorderPoint);
-                const ss = toNonNegNumberOrThrow("Safety Stock", safetyStock);
-
-                if (mode === "create") {
-                  const payload: CreateBarangInput = {
-                    partNumber: pn,
-                    plant: pl,
-                    materialDescription: materialDescription.trim(),
-                    baseUnitOfMeasure: baseUnitOfMeasure.trim(),
-                    reorderPoint: rop,
-                    safetyStock: ss,
-                    materialGroup: materialGroup.trim()
-                      ? materialGroup.trim()
-                      : null,
-                  };
-                  await onSubmit(payload);
-                } else {
-                  const payload: UpdateBarangInput = {
-                    // ✅ bisa pindah plant
-                    plant: pl,
-                    materialDescription: materialDescription.trim(),
-                    baseUnitOfMeasure: baseUnitOfMeasure.trim(),
-                    reorderPoint: rop,
-                    safetyStock: ss,
-                    materialGroup: materialGroup.trim()
-                      ? materialGroup.trim()
-                      : null,
-                  };
-                  await onSubmit(payload);
-                }
-              } catch (e) {
-                setErr(e instanceof Error ? e.message : "Gagal menyimpan");
+                const validTransforms = transforms.filter(t => t.qtyFrom && t.eumFrom && t.qtyTo && t.eumTo);
+                await onSubmit({ ...formData, transforms: validTransforms });
+              } catch (e: any) {
+                setErr(e.message);
               } finally {
                 setSaving(false);
               }
             }}
+            disabled={saving}
+            type="button"
           >
-            {saving ? "Menyimpan…" : "Simpan"}
+            {saving ? "Menyimpan..." : "Simpan Barang"}
           </button>
         </div>
       </div>

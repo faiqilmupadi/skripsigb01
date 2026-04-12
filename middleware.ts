@@ -8,12 +8,15 @@ function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
+// UBAH BAGIAN INI: Tambahkan rute untuk ownerGudang, adminGudang, dan vendor
 function isProtected(pathname: string) {
   return (
+    pathname.startsWith("/ownerGudang") ||
     pathname.startsWith("/adminGudang") ||
-    pathname.startsWith("/kepalaGudang") ||
+    pathname.startsWith("/vendor") ||
+    pathname.startsWith("/api/ownerGudang") ||
     pathname.startsWith("/api/adminGudang") ||
-    pathname.startsWith("/api/kepalaGudang")
+    pathname.startsWith("/api/vendor")
   );
 }
 

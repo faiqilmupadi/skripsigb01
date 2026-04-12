@@ -40,8 +40,9 @@ export async function loginWithPassword(payload: Partial<LoginRequestBody>): Pro
     return { ok: false, status: 400, message: "Username/Email dan password wajib diisi." };
   }
 
+  // UBAH BAGIAN INI: Menggunakan "roleUser AS role"
   const rows = await dbQuery<UserRow>(
-    `SELECT userId, username, email, password, role, deletedOn
+    `SELECT userId, username, email, password, roleUser AS role, deletedOn
      FROM users
      WHERE (username = ? OR email = ?)
        AND (deletedOn IS NULL)

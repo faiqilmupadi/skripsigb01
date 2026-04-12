@@ -21,6 +21,7 @@ export default function TextInput({
     <input
       className={className}
       value={value}
+      suppressHydrationWarning
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       type={type}
