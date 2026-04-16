@@ -15,7 +15,7 @@ function getSecret(): string {
 }
 
 export function signSessionToken(payload: SessionUser): string {
-  return jwt.sign(payload, getSecret(), { expiresIn: "7d" });
+  return jwt.sign(payload, getSecret(), { expiresIn: "2h" });
 }
 
 export function verifySessionToken(token: string): SessionUser {

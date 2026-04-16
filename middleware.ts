@@ -1,57 +1,51 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyEdgeSessionAndRole } from "@/app/features/login/services/middlewareAuth";
-
-const PUBLIC_PREFIXES = ["/login", "/api/auth/login", "/api/auth/logout", "/_next", "/favicon"];
-
-function isPublic(pathname: string) {
-  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
-}
-
-// UBAH BAGIAN INI: Tambahkan rute untuk ownerGudang, adminGudang, dan vendor
-function isProtected(pathname: string) {
-  return (
-    pathname.startsWith("/ownerGudang") ||
-    pathname.startsWith("/adminGudang") ||
-    pathname.startsWith("/vendor") ||
-    pathname.startsWith("/api/ownerGudang") ||
-    pathname.startsWith("/api/adminGudang") ||
-    pathname.startsWith("/api/vendor")
-  );
-}
+import { jwtVerify, decodeJwt } from "jose"; // Pakai jose karena middleware jalan di Edge Runtime
 
 export async function middleware(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
-
-  if (isPublic(pathname)) return NextResponse.next();
-  if (!isProtected(pathname)) return NextResponse.next();
-
+  const { pathname } = req.nextUrl;
   const token = req.cookies.get("session")?.value;
-  if (!token) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("reason", "unauthorized");
-    return NextResponse.redirect(url);
+
+  // 1. Daftar area terproteksi
+  const isOwnerArea = pathname.startsWith("/ownerGudang");
+  const isAdminArea = pathname.startsWith("/adminGudang");
+  const isVendorArea = pathname.startsWith("/vendor");
+
+  // Jika mencoba akses area privat
+  if (isOwnerArea || isAdminArea || isVendorArea) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    try {
+      // Verifikasi token
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+      await jwtVerify(token, secret);
+      const payload = decodeJwt(token) as any;
+      const role = payload.role; // Ambil role dari isi JWT
+
+      // 2. Proteksi Cross-Role (Cek userId & Role)
+      if (isOwnerArea && role !== "ownerGudang") {
+        return NextResponse.redirect(new URL("/login", req.url)); // Langsung usir ke login
+      }
+      if (isAdminArea && role !== "adminGudang") {
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+      if (isVendorArea && role !== "vendor") {
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+      
+    } catch (err) {
+      // Token expired atau dimanipulasi
+      const res = NextResponse.redirect(new URL("/login", req.url));
+      res.cookies.delete("session");
+      return res;
+    }
   }
 
-  const check = await verifyEdgeSessionAndRole(token, pathname);
-
-  if (check.ok) return NextResponse.next();
-
-  if (check.reason === "forbidden" && "redirectTo" in check) {
-    const url = req.nextUrl.clone();
-    url.pathname = check.redirectTo;
-    url.searchParams.set("reason", "forbidden");
-    return NextResponse.redirect(url);
-  }
-
-  const url = req.nextUrl.clone();
-  url.pathname = "/login";
-  url.searchParams.set("reason", check.reason);
-
-  const res = NextResponse.redirect(url);
-  res.cookies.set("session", "", { path: "/", maxAge: 0 });
-  return res;
+  return NextResponse.next();
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image).*)"] };
+export const config = {
+  matcher: ["/ownerGudang/:path*", "/adminGudang/:path*", "/vendor/:path*"],
+};

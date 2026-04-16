@@ -1,3 +1,4 @@
+// C:\faiq\skripsi\skripsigb01\app\features\katalogBarang\components\KatalogBarangClient.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -8,7 +9,12 @@ import KatalogBarangTable from "@/app/features/katalogBarang/components/KatalogB
 import BarangFormModal from "@/app/features/katalogBarang/components/BarangFormModal";
 import ConfirmDeleteBarangModal from "@/app/features/katalogBarang/components/ConfirmDeleteBarangModal";
 
-export default function KatalogBarangClient() {
+// 🔥 PERBAIKAN DI SINI: Ubah id: number menjadi kodeWarna: string
+type Props = {
+  colorOptions: { kodeWarna: string; namaWarna: string }[];
+};
+
+export default function KatalogBarangClient({ colorOptions }: Props) {
   const { rows, loading, error, actions } = useKatalogBarang();
 
   const [openForm, setOpenForm] = useState(false);
@@ -50,21 +56,21 @@ export default function KatalogBarangClient() {
         />
       </div>
 
-        <BarangFormModal
-          open={openForm}
-          mode={editing ? "edit" : "create"}
-          initial={editing}
-          onClose={() => setOpenForm(false)}
-          onSubmit={async (payload) => {
-            if (editing) {
-              // HAPUS editing.kodeVendor dari sini
-              await actions.update(editing.kodeBarang, payload as any); 
-            } else {
-              await actions.create(payload as any);
-            }
-            setOpenForm(false);
-          }}
-        />
+      <BarangFormModal
+        open={openForm}
+        mode={editing ? "edit" : "create"}
+        initial={editing}
+        colorOptions={colorOptions} // Data sudah sesuai sekarang
+        onClose={() => setOpenForm(false)}
+        onSubmit={async (payload) => {
+          if (editing) {
+            await actions.update(editing.kodeBarang, payload as any); 
+          } else {
+            await actions.create(payload as any);
+          }
+          setOpenForm(false);
+        }}
+      />
 
       <ConfirmDeleteBarangModal
         open={openDelete}
