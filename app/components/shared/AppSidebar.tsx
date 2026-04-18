@@ -16,40 +16,42 @@ type Props = {
   onLogoutClick: () => void;
 };
 
-function Icon({ type }: { type: "home" | "user" | "box" | "history" }) {
-  if (type === "home")
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" className={styles.sidebarIcon} aria-hidden="true">
-        <path d="M12 3l9 8h-3v10h-5v-6H11v6H6V11H3l9-8z" fill="currentColor" />
-      </svg>
-    );
-  if (type === "user")
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" className={styles.sidebarIcon} aria-hidden="true">
-        <path
-          d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5z"
-          fill="currentColor"
-        />
-      </svg>
-    );
-  if (type === "box")
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" className={styles.sidebarIcon} aria-hidden="true">
-        <path d="M21 8l-9-5-9 5 9 5 9-5zm-9 7l-9-5v10l9 5V15zm2 10l9-5V10l-9 5v10z" fill="currentColor" />
-      </svg>
-    );
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" className={styles.sidebarIcon} aria-hidden="true">
-      <path d="M12 8V4l8 8-8 8v-4H4V8h8z" fill="currentColor" />
-    </svg>
-  );
-}
-
+// Objek ikon menggunakan format ReactNode langsung, lengkap dengan class bawaan
 export const SidebarIcons = {
-  Home: <Icon type="home" />,
-  User: <Icon type="user" />,
-  Box: <Icon type="box" />,
-  History: <Icon type="history" />,
+  // Ikon Katalog (Grid/Archive)
+  Katalog: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.sidebarIcon} aria-hidden="true">
+      <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+    </svg>
+  ),
+  
+  // Ikon Stok Barang (Tumpukan / Layers)
+  Stok: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.sidebarIcon} aria-hidden="true">
+      <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+    </svg>
+  ),
+  
+  // Ikon Purchase Order (Keranjang Belanja)
+  Cart: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.sidebarIcon} aria-hidden="true">
+      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+    </svg>
+  ),
+  
+  // Ikon Sales Order (Tas Belanja)
+  Bag: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.sidebarIcon} aria-hidden="true">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+  ),
+  
+  // Ikon Vendor (Truk Pengiriman)
+  Truck: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.sidebarIcon} aria-hidden="true">
+      <rect width="15" height="10" x="3" y="8" rx="2"/><path d="M18 14h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/>
+    </svg>
+  )
 };
 
 export default function AppSidebar({ title = "Kepala Gudang", items, onLogoutClick }: Props) {
@@ -66,6 +68,7 @@ export default function AppSidebar({ title = "Kepala Gudang", items, onLogoutCli
           const active = pathname === it.href;
           return (
             <Link key={it.href} href={it.href} className={active ? styles.sidebarItemActive : styles.sidebarItem}>
+              {/* Memanggil ikon langsung tanpa perlu fungsi tambahan */}
               {it.icon}
               <span>{it.label}</span>
             </Link>

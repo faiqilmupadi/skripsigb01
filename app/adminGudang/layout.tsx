@@ -1,4 +1,3 @@
-// app/adminGudang/layout.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -12,34 +11,33 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
-  // Sesuaikan dengan folder: katalogBarang, purchaseOrder, salesOrder, stokBarang, vendorList
-  // Sesuaikan dengan icon yang tersedia: Home, User, Box, History
+  // Menggunakan ikon-ikon baru yang lebih representatif
   const sidebarItems = useMemo(
     () => [
       { 
         label: "Katalog Barang", 
         href: "/adminGudang/katalogBarang" as any, 
-        icon: SidebarIcons.Box 
+        icon: SidebarIcons.Katalog // <-- Ikon Grid
       },
       { 
         label: "Stok Barang", 
         href: "/adminGudang/stokBarang" as any, 
-        icon: SidebarIcons.Box 
+        icon: SidebarIcons.Stok // <-- Ikon Tumpukan
       },
       { 
         label: "Purchase Order", 
         href: "/adminGudang/purchaseOrder" as any, 
-        icon: SidebarIcons.History 
+        icon: SidebarIcons.Cart // <-- Ikon Keranjang
       },
       { 
         label: "Sales Order", 
         href: "/adminGudang/salesOrder" as any, 
-        icon: SidebarIcons.History 
+        icon: SidebarIcons.Bag // <-- Ikon Tas Belanja
       },
       { 
         label: "Daftar Vendor", 
         href: "/adminGudang/vendorList" as any, 
-        icon: SidebarIcons.User 
+        icon: SidebarIcons.Truck // <-- Ikon Truk
       },
     ],
     []
@@ -53,7 +51,6 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
 
   return (
     <div className={styles.shell}>
-      {/* Title diubah menjadi Admin Gudang */}
       <AppSidebar title="Admin Gudang" items={sidebarItems} onLogoutClick={() => setLogoutOpen(true)} />
 
       <main className={styles.main}>{children}</main>
