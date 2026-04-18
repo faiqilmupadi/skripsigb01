@@ -17,12 +17,28 @@ const vendorColumns: DataTableColumn<Vendor>[] = [
 ];
 
 const vendorListColumns: DataTableColumn<VendorList>[] = [
-  { key: "kodeVendor", header: "Kode Vendor", width: 130, accessor: "kodeVendor" },
+  { key: "kodeVendor", header: "Kode Vendor", width: 110, accessor: "kodeVendor" },
   { key: "namaVendor", header: "Nama Vendor", accessor: "namaVendor" },
-  { key: "kodeBarang", header: "Kode Barang", width: 140, accessor: "kodeBarang" },
-  { key: "eum", header: "EuM", width: 100, align: "center", accessor: "eum" },
+  { key: "kodeBarang", header: "Kode Barang", width: 110, accessor: "kodeBarang" },
+  { key: "namaBarang", header: "Nama Barang", accessor: "namaBarang" },
+  { key: "warnaBarang", header: "Warna", width: 90, accessor: "warnaBarang" },
+  { 
+    key: "hargaDariVendor", 
+    header: "Harga", 
+    width: 120, 
+    accessor: "hargaDariVendor", 
+    render: (rowOrVal: any) => {
+      // Pengecekan aman: jika yang dilempar adalah objek baris (row), ambil hargaDariVendor
+      const harga = typeof rowOrVal === "object" && rowOrVal !== null 
+        ? rowOrVal.hargaDariVendor 
+        : rowOrVal;
+        
+      const num = Number(harga);
+      return isNaN(num) || !harga ? "Rp 0" : `Rp ${num.toLocaleString("id-ID")}`;
+    } 
+  },
+  { key: "eum", header: "EuM", width: 80, align: "center", accessor: "eum" },
 ];
-
 const TABS: { key: ActiveTab; label: string }[] = [
   { key: "vendor", label: "Vendor" },
   { key: "vendorList", label: "Vendor List" },
@@ -125,7 +141,7 @@ export default function VendorPage() {
             columns={vendorListColumns}
             rowKey={(r) => `${r.kodeVendor}-${r.kodeBarang}`}
             loading={vendorList.loading}
-            search={{ placeholder: "Cari kode vendor / barang…", keys: ["kodeVendor", "namaVendor", "kodeBarang"] }}
+            search={{ placeholder: "Cari data…", keys: ["kodeVendor", "namaVendor", "kodeBarang", "namaBarang", "warnaBarang"] }}
             actionsHeader="Aksi"
             renderActions={(row) => (
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -140,12 +156,14 @@ export default function VendorPage() {
             editTarget={vendorList.editTarget}
             form={vendorList.form}
             vendors={vendorList.vendors}
+            barangOptions={vendorList.barangOptions}
             saving={vendorList.saving}
             error={vendorList.error}
             onClose={vendorList.closeForm}
             onSubmit={vendorList.handleSave}
             onChange={(patch) => vendorList.setForm((prev) => ({ ...prev, ...patch }))}
             onKodeVendorChange={vendorList.handleKodeVendorChange}
+            onKodeBarangChange={vendorList.handleKodeBarangChange}
           />
 
           <DeleteConfirmModal

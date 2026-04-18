@@ -1,4 +1,4 @@
-import { Vendor, VendorFormData, VendorList, VendorListFormData } from "../types";
+import { Vendor, VendorFormData, VendorList, VendorListFormData, BarangOption } from "../types";
 
 const BASE_VENDOR = "/api/adminGudang/vendor";
 const BASE_VENDOR_LIST = "/api/adminGudang/vendorList";
@@ -47,7 +47,7 @@ export async function removeVendor(kodeVendor: string): Promise<void> {
 
 // ─── VENDOR LIST ───────────────────────────────────────────────────────────────
 
-export async function fetchVendorList(): Promise<VendorList[]> {
+export async function fetchVendorList(): Promise<{ data: VendorList[], barangOptions: BarangOption[] }> {
   const res = await fetch(BASE_VENDOR_LIST);
   if (!res.ok) throw new Error("Gagal mengambil data vendor list");
   return res.json();

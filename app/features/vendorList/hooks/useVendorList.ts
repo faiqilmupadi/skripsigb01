@@ -8,18 +8,22 @@ import {
   fetchVendors,
   removeVendorList,
 } from "../services/vendorListServices.client";
-import { Vendor, VendorList, VendorListFormData } from "../types";
+import { BarangOption, Vendor, VendorList, VendorListFormData } from "../types";
 
 const EMPTY_FORM: VendorListFormData = {
   kodeVendor: "",
   namaVendor: "",
   kodeBarang: "",
+  namaBarang: "",
+  warnaBarang: "",
+  hargaDariVendor: "",
   eum: "",
 };
 
 export function useVendorList() {
   const [rows, setRows] = useState<VendorList[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [barangOptions, setBarangOptions] = useState<BarangOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +39,12 @@ export function useVendorList() {
     setLoading(true);
     setError(null);
     try {
-      const [listData, vendorData] = await Promise.all([
+      const [listRes, vendorData] = await Promise.all([
         fetchVendorList(),
         fetchVendors(),
       ]);
-      setRows(listData);
+      setRows(listRes.data);
+      setBarangOptions(listRes.barangOptions);
       setVendors(vendorData);
     } catch (e: any) {
       setError(e.message);
@@ -50,12 +55,24 @@ export function useVendorList() {
 
   useEffect(() => { load(); }, [load]);
 
+  // AUTO-FILL Vendor
   function handleKodeVendorChange(kodeVendor: string) {
     const found = vendors.find((v) => v.kodeVendor === kodeVendor);
     setForm((prev) => ({
       ...prev,
       kodeVendor,
       namaVendor: found?.namaVendor ?? "",
+    }));
+  }
+
+  // AUTO-FILL Barang
+  function handleKodeBarangChange(kodeBarang: string) {
+    const found = barangOptions.find((b) => b.kodeBarang === kodeBarang);
+    setForm((prev) => ({
+      ...prev,
+      kodeBarang,
+      namaBarang: found?.namaBarang ?? "",
+      warnaBarang: found?.warna ?? "",
     }));
   }
 
@@ -72,6 +89,9 @@ export function useVendorList() {
       kodeVendor: row.kodeVendor,
       namaVendor: row.namaVendor,
       kodeBarang: row.kodeBarang,
+      namaBarang: row.namaBarang,
+      warnaBarang: row.warnaBarang,
+      hargaDariVendor: row.hargaDariVendor,
       eum: row.eum,
     });
     setError(null);
@@ -84,8 +104,8 @@ export function useVendorList() {
   }
 
   async function handleSave() {
-    if (!form.kodeVendor.trim() || !form.kodeBarang.trim() || !form.eum.trim()) {
-      setError("Kode vendor, kode barang, dan EuM wajib diisi");
+    if (!form.kodeVendor.trim() || !form.kodeBarang.trim() || !form.eum.trim() || form.hargaDariVendor === "") {
+      setError("Semua field wajib diisi");
       return;
     }
     setSaving(true);
@@ -93,6 +113,7 @@ export function useVendorList() {
     try {
       if (editTarget) {
         await editVendorList(editTarget.kodeVendor, editTarget.kodeBarang, {
+          hargaDariVendor: Number(form.hargaDariVendor),
           eum: form.eum,
         });
       } else {
@@ -130,11 +151,10 @@ export function useVendorList() {
   }
 
   return {
-    rows, vendors, loading, saving, error, deleting,
-    formOpen, editTarget, form, setForm,
-    deleteTarget,
+    rows, vendors, barangOptions, loading, saving, error, deleting,
+    formOpen, editTarget, form, setForm, deleteTarget,
     openAdd, openEdit, closeForm, handleSave,
     openDelete, closeDelete, handleDelete,
-    handleKodeVendorChange,
+    handleKodeVendorChange, handleKodeBarangChange
   };
 }
