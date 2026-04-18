@@ -5,11 +5,9 @@ export type PurchaseOrderItem = {
   namaBarang: string;
   qty: number;
   eum: string;
-  // Tambahan untuk konversi dinamis ke satuan terkecil (Pcs)
   baseQty: number;
   baseEum: string;
   conversionFactor: number;
-  
   hargaSatuan: number;
   totalHarga: number;
 };
@@ -43,4 +41,13 @@ export type VendorListOption = {
   namaBarang: string;
   hargaDariVendor: number;
   eum: string;
+  baseEum: string; // Tambahan untuk referensi konversi
+};
+
+export type TransformEum = {
+  kodeBarang: string;
+  qtyFrom: number;
+  eumFrom: string;
+  qtyTo: number;
+  eumTo: string;
 };

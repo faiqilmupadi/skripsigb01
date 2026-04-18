@@ -2,20 +2,20 @@
 
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { fetchPurchaseOrders, addPurchaseOrder, submitReceivePO } from "../services/purchaseOrder.client";
-import { PurchaseOrderFormData, PurchaseOrderGroup, VendorListOption, VendorOption } from "../types";
-import type { TimePreset } from "@/app/types/timeRangeTypes"; // Pastikan tipe ini ada
+import { PurchaseOrderFormData, PurchaseOrderGroup, VendorListOption, VendorOption, TransformEum } from "../types";
+import type { TimePreset } from "@/app/types/timeRangeTypes";
 
 export function usePurchaseOrder() {
   const [rows, setRows] = useState<PurchaseOrderGroup[]>([]);
   const [vendors, setVendors] = useState<VendorOption[]>([]);
   const [vendorLists, setVendorLists] = useState<VendorListOption[]>([]);
+  const [transformList, setTransformList] = useState<TransformEum[]>([]); // Menyimpan aturan konversi
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // --- STATE UNTUK FILTER WAKTU ---
-  const [timePreset, setTimePreset] = useState<TimePreset>("3m"); // Default 3 bulan terakhir
+  const [timePreset, setTimePreset] = useState<TimePreset>("3m");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
 
@@ -30,7 +30,6 @@ export function usePurchaseOrder() {
   }[]>([]);
   
   const [isReceiving, setIsReceiving] = useState(false);
-
   const isOverReceiving = receiveItems.some(item => item.qtyDiterima > item.qtyPesanBase);
 
   const [form, setForm] = useState<PurchaseOrderFormData>({ kodeVendor: "", namaVendor: "", items: [] });
@@ -42,6 +41,7 @@ export function usePurchaseOrder() {
       setRows(res.data);
       setVendors(res.options.vendors);
       setVendorLists(res.options.vendorLists);
+      setTransformList(res.options.transformList);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -51,16 +51,10 @@ export function usePurchaseOrder() {
 
   useEffect(() => { load(); }, [load]);
 
-  // --- LOGIKA FILTER WAKTU ---
   const filteredRows = useMemo(() => {
     if (!rows.length) return [];
-    
-    const now = new Date();
-    now.setHours(23, 59, 59, 999);
-    
-    const pastDate = new Date();
-    pastDate.setHours(0, 0, 0, 0);
-
+    const now = new Date(); now.setHours(23, 59, 59, 999);
+    const pastDate = new Date(); pastDate.setHours(0, 0, 0, 0);
     let applyFilter = true;
 
     switch (timePreset) {
@@ -74,21 +68,17 @@ export function usePurchaseOrder() {
 
     return rows.filter(row => {
       const rowDate = new Date(row.tanggal);
-      
       if (timePreset === "custom") {
          const start = customStart ? new Date(customStart) : new Date("2000-01-01");
          const end = customEnd ? new Date(customEnd) : new Date("2099-12-31");
-         start.setHours(0, 0, 0, 0);
-         end.setHours(23, 59, 59, 999);
+         start.setHours(0, 0, 0, 0); end.setHours(23, 59, 59, 999);
          return rowDate >= start && rowDate <= end;
       }
-      
-      if (!applyFilter) return true; // Tampilkan semua jika tidak ada filter valid
+      if (!applyFilter) return true;
       return rowDate >= pastDate && rowDate <= now;
     });
   }, [rows, timePreset, customStart, customEnd]);
 
-  // ... (Fungsi Modal, Save, Receive tetap sama, tidak ada yang diubah)
   function openReceiveModal(row: PurchaseOrderGroup) {
     setReceiveTarget(row); setReceiveCatatan("");
     setReceiveItems(row.items.map(i => ({
@@ -98,14 +88,11 @@ export function usePurchaseOrder() {
   }
 
   function handleReceiveQtyChange(index: number, newQty: number) {
-    setReceiveItems(prev => {
-      const copy = [...prev]; copy[index].qtyDiterima = newQty < 0 ? 0 : newQty; return copy;
-    });
+    setReceiveItems(prev => { const copy = [...prev]; copy[index].qtyDiterima = newQty < 0 ? 0 : newQty; return copy; });
   }
 
   async function handleReceivePO() {
-    if (!receiveTarget) return;
-    setIsReceiving(true);
+    if (!receiveTarget) return; setIsReceiving(true);
     try {
       await submitReceivePO(receiveTarget.nomorPurchaseOrder, receiveCatatan, receiveItems);
       setReceiveTarget(null); setReceiveItems([]); setReceiveCatatan(""); await load();
@@ -125,18 +112,52 @@ export function usePurchaseOrder() {
     setForm(prev => { const newItems = [...prev.items]; newItems.splice(index, 1); return { ...prev, items: newItems }; });
   }
 
+  // Logika Matematika Konversi (Dus -> Pcs)
+  const getMultiplier = (kodeBarang: string, fromEum: string, toEum: string) => {
+    if (!fromEum || !toEum || fromEum.toLowerCase() === toEum.toLowerCase()) return 1;
+    const rules = transformList.filter(t => t.kodeBarang === kodeBarang);
+    let currentEum = fromEum;
+    let multiplier = 1;
+    let maxLoop = 5;
+    while(currentEum.toLowerCase() !== toEum.toLowerCase() && maxLoop > 0) {
+        const rule = rules.find(r => r.eumFrom.toLowerCase() === currentEum.toLowerCase());
+        if (!rule) break; 
+        multiplier *= (rule.qtyTo / rule.qtyFrom);
+        currentEum = rule.eumTo;
+        maxLoop--;
+    }
+    return multiplier;
+  }
+
   function handleItemChange(index: number, kodeBarang: string) {
     const found = vendorLists.find(v => v.kodeBarang === kodeBarang && v.kodeVendor === form.kodeVendor);
     setForm(prev => {
       const newItems = [...prev.items];
-      if (found) { newItems[index] = { ...newItems[index], kodeBarang: found.kodeBarang, namaBarang: found.namaBarang, eum: found.eum, hargaSatuan: found.hargaDariVendor, totalHarga: found.hargaDariVendor * newItems[index].qty }; }
+      if (found) { 
+        const multiplier = getMultiplier(found.kodeBarang, found.eum, found.baseEum);
+        newItems[index] = { 
+            ...newItems[index], 
+            kodeBarang: found.kodeBarang, 
+            namaBarang: found.namaBarang, 
+            eum: found.eum, // Mengunci unit ke unit Vendor (Wajib Dus/Kantong)
+            baseEum: found.baseEum,
+            conversionFactor: multiplier,
+            baseQty: newItems[index].qty * multiplier, // Kalkulasi otomatis
+            hargaSatuan: found.hargaDariVendor, 
+            totalHarga: found.hargaDariVendor * newItems[index].qty 
+        }; 
+      }
       return { ...prev, items: newItems };
     });
   }
 
   function handleQtyChange(index: number, qty: number) {
     setForm(prev => {
-      const newItems = [...prev.items]; newItems[index].qty = qty; newItems[index].totalHarga = newItems[index].hargaSatuan * qty; return { ...prev, items: newItems };
+      const newItems = [...prev.items]; 
+      newItems[index].qty = qty; 
+      newItems[index].baseQty = qty * newItems[index].conversionFactor; // Update konversi secara live
+      newItems[index].totalHarga = newItems[index].hargaSatuan * qty; 
+      return { ...prev, items: newItems };
     });
   }
 
@@ -150,10 +171,8 @@ export function usePurchaseOrder() {
   }
 
   return {
-    rows: filteredRows, // <-- Ekspor rows yang SUDAH DIFILTER
-    timePreset, setTimePreset, customStart, setCustomStart, customEnd, setCustomEnd, // <-- Ekspor State Filter
-    vendors, vendorLists, loading, saving, error,
-    form, formOpen, setFormOpen, viewTarget, setViewTarget,
+    rows: filteredRows, timePreset, setTimePreset, customStart, setCustomStart, customEnd, setCustomEnd,
+    vendors, vendorLists, loading, saving, error, form, formOpen, setFormOpen, viewTarget, setViewTarget,
     receiveTarget, setReceiveTarget, receiveCatatan, setReceiveCatatan, isReceiving, receiveItems, isOverReceiving, handleReceivePO, openReceiveModal, handleReceiveQtyChange,
     handleVendorChange, handleItemChange, handleQtyChange, addItem, removeItem, handleSave, setForm
   };

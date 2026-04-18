@@ -30,7 +30,6 @@ export async function getPurchaseOrdersGrouped(): Promise<PurchaseOrderGroup[]> 
     }
     
     const hargaSatuan = row.qty > 0 && row.totalHarga ? row.totalHarga / row.qty : 0;
-
     const targetEum = allStoks.find(s => s.kodeBarang === row.kodeBarang)?.eum || row.eum;
     const rules = allTransforms.filter(t => t.kodeBarang === row.kodeBarang);
 
@@ -66,10 +65,17 @@ export async function getPurchaseOrdersGrouped(): Promise<PurchaseOrderGroup[]> 
   return Object.values(grouped);
 }
 
+// [REVISI] Menarik data Transform dan Stok Dasar untuk Kalkulasi di Form
 export async function getPOOptions() {
   const vendors = await dbQuery<VendorOption>(`SELECT kodeVendor, namaVendor FROM vendor ORDER BY namaVendor ASC`);
-  const vendorLists = await dbQuery<VendorListOption>(`SELECT kodeVendor, kodeBarang, namaBarang, hargaDariVendor, eum FROM vendorList`);
-  return { vendors, vendorLists };
+  const vendorLists = await dbQuery<VendorListOption>(`
+    SELECT vl.kodeVendor, vl.kodeBarang, vl.namaBarang, vl.hargaDariVendor, vl.eum, sb.eum AS baseEum 
+    FROM vendorList vl
+    LEFT JOIN stokBarang sb ON vl.kodeBarang = sb.kodeBarang
+  `);
+  const transformList = await dbQuery<any>(`SELECT * FROM transformEum`);
+  
+  return { vendors, vendorLists, transformList };
 }
 
 export async function createPurchaseOrder(data: { kodeVendor: string, namaVendor: string, userId: string, items: PurchaseOrderItem[] }) {
@@ -90,20 +96,13 @@ export async function createPurchaseOrder(data: { kodeVendor: string, namaVendor
 }
 
 export async function receivePurchaseOrder(
-  nomorPO: string, 
-  catatan: string, 
-  userId: string, 
+  nomorPO: string, catatan: string, userId: string, 
   itemsReceived: { kodeBarang: string, qtyDiterima: number, eum: string, conversionFactor: number }[]
 ) {
   const items = await dbQuery<any>(`SELECT * FROM purchaseOrder WHERE nomorPurchaseOrder = ?`, [nomorPO]);
   if (items.length === 0) throw new Error("Purchase Order tidak ditemukan.");
 
-  const catatanFinal = catatan || "-";
-
-  await dbExec(
-    `UPDATE purchaseOrder SET status = 'Selesai', catatan = ? WHERE nomorPurchaseOrder = ?`,
-    [catatanFinal, nomorPO]
-  );
+  await dbExec(`UPDATE purchaseOrder SET status = 'Selesai', catatan = ? WHERE nomorPurchaseOrder = ?`, [catatan || "-", nomorPO]);
 
   const tanggalHariIni = new Date().toISOString().slice(0, 10);
   const movementType = 'POTP123'; 
@@ -111,7 +110,6 @@ export async function receivePurchaseOrder(
   for (const item of items) {
     const receivedData = itemsReceived.find(ir => ir.kodeBarang === item.kodeBarang);
     if (!receivedData) continue;
-
     const qtyAktualBase = receivedData.qtyDiterima;
 
     if (qtyAktualBase > 0) {
@@ -123,17 +121,13 @@ export async function receivePurchaseOrder(
       const hargaSatuanBase = hargaSatuanAsli / receivedData.conversionFactor;
       const totalHargaAktual = hargaSatuanBase * qtyAktualBase;
 
-      // [REVISI] Menambahkan kolom catatan di tabel movements
       await dbExec(
         `INSERT INTO movements (movementType, nomorPurchaseOrder, kodeBarang, namaBarang, warna, volume, quantity, eum, totalHarga, catatan, userName, postingDate) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [movementType, nomorPO, item.kodeBarang, item.namaBarang, warna, volume, qtyAktualBase, receivedData.eum, totalHargaAktual, catatanFinal, userId, tanggalHariIni]
+        [movementType, nomorPO, item.kodeBarang, item.namaBarang, warna, volume, qtyAktualBase, receivedData.eum, totalHargaAktual, catatan || "-", userId, tanggalHariIni]
       );
 
-      await dbExec(
-        `UPDATE stokBarang SET barangSiap = barangSiap + ? WHERE kodeBarang = ?`,
-        [qtyAktualBase, item.kodeBarang]
-      );
+      await dbExec(`UPDATE stokBarang SET barangSiap = barangSiap + ? WHERE kodeBarang = ?`, [qtyAktualBase, item.kodeBarang]);
     }
   }
 }
