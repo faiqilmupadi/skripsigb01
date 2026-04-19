@@ -2,12 +2,12 @@ import { dbQuery } from "@/app/lib/db.server";
 import { DashboardData, POStatusMonitor } from "../types";
 
 export async function getDashboardData(start: string, end: string): Promise<DashboardData> {
-  // 1. Aktivitas Admin (Jumlah Transaksi PO dan SO)
+  // 1. Aktivitas Admin (Jumlah Transaksi PO dan SO UNIK)
   const adminActivities = await dbQuery<any>(`
     SELECT 
       u.namaUser as userName,
-      SUM(CASE WHEN m.movementType = 'POTP123' THEN 1 ELSE 0 END) as poCount,
-      SUM(CASE WHEN m.movementType = 'SOTP123' THEN 1 ELSE 0 END) as soCount
+      COUNT(DISTINCT CASE WHEN m.movementType = 'POTP123' THEN m.nomorPurchaseOrder END) as poCount,
+      COUNT(DISTINCT CASE WHEN m.movementType = 'SOTP123' THEN m.nomorSalesOrder END) as soCount
     FROM users u
     JOIN movements m ON u.userId = m.userName
     WHERE m.postingDate BETWEEN ? AND ?
