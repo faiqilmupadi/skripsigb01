@@ -1,5 +1,11 @@
-import DashboardAnalisisClient from "@/app/features/dashboardAnalisis/components/DashboardAnalisisClient";
+"use client";
+
+import DashboardAnalisisPage from "../../features/dashboardAnalisis/components/DashboardAnalisisPage";
 
 export default function Page() {
-  return <DashboardAnalisisClient />;
+  return (
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+      <DashboardAnalisisPage />
+    </div>
+  );
 }

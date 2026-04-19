@@ -7,6 +7,9 @@ import styles from "@/styles/dashboardAnalisis.module.css";
 import AppSidebar, { SidebarIcons } from "@/app/components/shared/AppSidebar";
 import { logout } from "@/app/services/logoutService";
 
+// 1. Import komponen Notifikasi ROP
+import NotifikasiROP from "@/app/features/notifikasiROP/components/NotifikasiROP";
+
 export default function AdminGudangLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -17,27 +20,27 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
       { 
         label: "Katalog Barang", 
         href: "/adminGudang/katalogBarang" as any, 
-        icon: SidebarIcons.Katalog // <-- Ikon Grid
+        icon: SidebarIcons.Katalog 
       },
       { 
         label: "Stok Barang", 
         href: "/adminGudang/stokBarang" as any, 
-        icon: SidebarIcons.Stok // <-- Ikon Tumpukan
+        icon: SidebarIcons.Stok 
       },
       { 
         label: "Purchase Order", 
         href: "/adminGudang/purchaseOrder" as any, 
-        icon: SidebarIcons.Cart // <-- Ikon Keranjang
+        icon: SidebarIcons.Cart 
       },
       { 
         label: "Sales Order", 
         href: "/adminGudang/salesOrder" as any, 
-        icon: SidebarIcons.Bag // <-- Ikon Tas Belanja
+        icon: SidebarIcons.Bag 
       },
       { 
         label: "Daftar Vendor", 
         href: "/adminGudang/vendorList" as any, 
-        icon: SidebarIcons.Truck // <-- Ikon Truk
+        icon: SidebarIcons.Truck 
       },
     ],
     []
@@ -46,6 +49,7 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
   const onLogout = async () => {
     await logout();
     setLogoutOpen(false);
+    sessionStorage.removeItem("rop_dismissed");
     router.replace("/login");
   };
 
@@ -54,6 +58,9 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
       <AppSidebar title="Admin Gudang" items={sidebarItems} onLogoutClick={() => setLogoutOpen(true)} />
 
       <main className={styles.main}>{children}</main>
+
+      {/* 2. Panggil komponen Notifikasi di luar tag <main> agar selalu mengambang (fixed) */}
+      <NotifikasiROP />
 
       {logoutOpen ? (
         <div className={styles.modalOverlay} onClick={() => setLogoutOpen(false)} role="presentation">

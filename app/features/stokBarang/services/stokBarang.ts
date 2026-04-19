@@ -24,7 +24,7 @@ export async function adjustStokBarang(payload: StockAdjustmentPayload, userId: 
   } 
   else if (payload.tipe === "Rusak") {
     if (qty > stok.barangSiap) throw new Error(`Maksimal barang rusak adalah ${stok.barangSiap} (Sesuai Barang Siap).`);
-    movementType = 'RTP124'; // Barang Keluar Karena Rusak (Master Data Baru)
+    movementType = 'RTP123'; // Barang Keluar Karena Rusak (Master Data Baru)
     await dbExec(`UPDATE stokBarang SET barangSiap = barangSiap - ?, barangRusak = barangRusak + ? WHERE kodeBarang = ?`, [qty, qty, payload.kodeBarang]);
   } 
   else if (payload.tipe === "Ketemu") {
