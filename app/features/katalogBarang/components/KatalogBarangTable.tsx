@@ -1,9 +1,11 @@
+// C:\faiq\skripsi\skripsigb01\app\features\katalogBarang\components\KatalogBarangTable.tsx
 "use client";
 
 import { useState } from "react";
 import DataTable from "@/app/components/shared/DataTable";
 import type { KatalogBarangRow } from "@/app/features/katalogBarang/types";
 import TransformDetailModal from "./TransformDetailModal";
+import { sharedStyles } from "@/app/components/shared/UIStyles";
 
 interface Props {
   rows: KatalogBarangRow[];
@@ -36,78 +38,70 @@ export default function KatalogBarangTable({ rows, loading, onEdit, onDelete }: 
         columns={[
           { key: "kodeBarang", header: "Kode", accessor: "kodeBarang" },
           { key: "namaBarang", header: "Nama Barang", accessor: "namaBarang" },
-          { 
-            key: "baseOfMeasure", 
-            header: "Satuan Dasar", 
-            accessor: "baseOfMeasure", 
-            align: "center" 
-          },
-          { 
-            key: "leadtime", 
-            header: "Leadtime (Hari)", 
-            accessor: "leadtime", 
-            align: "center" 
-          },
-          { 
-            key: "safetyStock", 
-            header: "Safety Stock", 
-            accessor: "safetyStock", 
-            align: "center" 
-          },
-          { 
-            key: "transform", 
-            header: "Transformasi", 
+          { key: "baseOfMeasure", header: "Satuan Dasar", accessor: "baseOfMeasure", align: "center" },
+          { key: "leadtime", header: "Leadtime (Hari)", accessor: "leadtime", align: "center" },
+          { key: "safetyStock", header: "Safety Stock", accessor: "safetyStock", align: "center" },
+          {
+            key: "transform",
+            header: "Transformasi",
             render: (r: any) => {
               const count = r.allTransforms?.length || 0;
               return (
-                <button 
+                <button
                   type="button"
-                  onClick={() => handleShowDetail(r)}
-                  style={{ 
-                    color: count > 0 ? '#007bff' : '#999', 
-                    textDecoration: count > 0 ? 'underline' : 'none', 
-                    border: 'none', 
-                    background: 'none', 
-                    // PERBAIKAN DI SINI: Ditambahkan : 'default'
-                    cursor: count > 0 ? 'pointer' : 'default', 
-                    fontWeight: '500' 
+                  onClick={() => count > 0 && handleShowDetail(r)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "4px 10px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    border: "1.5px solid",
+                    cursor: count > 0 ? "pointer" : "default",
+                    fontFamily: "inherit",
+                    background: count > 0 ? "#eff6ff" : "#f8fafc",
+                    borderColor: count > 0 ? "#bfdbfe" : "#e2e8f0",
+                    color: count > 0 ? "#2563eb" : "#94a3b8",
+                    transition: "all 0.15s",
                   }}
                 >
-                  {count > 0 ? `Lihat Detail (${count})` : "-"}
+                  {count > 0 ? `🔗 ${count} Konversi` : "—"}
                 </button>
               );
-            }, 
-            align: "center" 
+            },
+            align: "center",
           },
         ]}
         actionsHeader="Aksi"
         renderActions={(r) => (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              title="Edit" 
-              onClick={() => onEdit(r)} 
-              type="button" 
-              style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '16px' }}
+          <>
+            <button
+              title="Edit"
+              onClick={() => onEdit(r)}
+              type="button"
+              style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionEdit }}
             >
-              ✎
+              ✎ Edit
             </button>
-            <button 
-              title="Hapus" 
-              onClick={() => onDelete(r)} 
-              type="button" 
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'red', fontSize: '16px' }}
+            <button
+              title="Hapus"
+              onClick={() => onDelete(r)}
+              type="button"
+              style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionDelete }}
             >
-              🗑
+              🗑 Hapus
             </button>
-          </div>
+          </>
         )}
       />
 
-      <TransformDetailModal 
+      <TransformDetailModal
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         namaBarang={selectedRow?.namaBarang || ""}
-        transforms={selectedRow?.allTransforms || []} 
+        transforms={selectedRow?.allTransforms || []}
       />
     </>
   );

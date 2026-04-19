@@ -1,9 +1,11 @@
+// C:\faiq\skripsi\skripsigb01\app\features\stokBarang\components\StokBarangPage.tsx
 "use client";
 
 import { useStokBarang } from "../hooks/useStokBarang";
 import DataTable, { DataTableColumn } from "@/app/components/shared/DataTable";
 import StokAdjustmentModal from "./StokAdjustmentModal";
 import { StokBarang } from "../types";
+import { sharedStyles } from "@/app/components/shared/UIStyles";
 
 export default function StokBarangPage() {
   const sb = useStokBarang();
@@ -12,76 +14,82 @@ export default function StokBarangPage() {
     { key: "kodeBarang", header: "Kode", accessor: "kodeBarang", width: 100 },
     { key: "namaBarang", header: "Nama Barang", accessor: "namaBarang" },
     { key: "warna", header: "Warna", accessor: "warna", width: 120 },
-    { 
-      key: "barangSiap", 
-      header: "Siap (Fisik)", 
-      accessor: "barangSiap",
-      render: (r) => <strong style={{ color: "#16a34a" }}>{r.barangSiap.toLocaleString('id-ID')} {r.eum}</strong>
+    {
+      key: "barangSiap", header: "Siap (Fisik)", accessor: "barangSiap",
+      render: (r) => (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          fontWeight: 700, color: "#15803d", fontSize: 13.5,
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80" }} />
+          {r.barangSiap.toLocaleString("id-ID")} {r.eum}
+        </span>
+      ),
     },
-    { 
-      key: "barangHilang", 
-      header: "Hilang", 
-      accessor: "barangHilang",
-      render: (r) => <span style={{ color: r.barangHilang > 0 ? "#dc2626" : "inherit" }}>{r.barangHilang.toLocaleString('id-ID')} {r.eum}</span>
+    {
+      key: "barangHilang", header: "Hilang", accessor: "barangHilang",
+      render: (r) => (
+        <span style={{ color: r.barangHilang > 0 ? "#dc2626" : "#94a3b8", fontWeight: r.barangHilang > 0 ? 700 : 500, fontSize: 13 }}>
+          {r.barangHilang > 0 ? `⚠ ${r.barangHilang.toLocaleString("id-ID")} ${r.eum}` : `0 ${r.eum}`}
+        </span>
+      ),
     },
-    { 
-      key: "barangRusak", 
-      header: "Rusak", 
-      accessor: "barangRusak",
-      render: (r) => <span style={{ color: r.barangRusak > 0 ? "#ea580c" : "inherit" }}>{r.barangRusak.toLocaleString('id-ID')} {r.eum}</span>
+    {
+      key: "barangRusak", header: "Rusak", accessor: "barangRusak",
+      render: (r) => (
+        <span style={{ color: r.barangRusak > 0 ? "#ea580c" : "#94a3b8", fontWeight: r.barangRusak > 0 ? 700 : 500, fontSize: 13 }}>
+          {r.barangRusak > 0 ? `⚠ ${r.barangRusak.toLocaleString("id-ID")} ${r.eum}` : `0 ${r.eum}`}
+        </span>
+      ),
     },
   ];
 
   return (
-    /* [REVISI] Menghapus maxWidth dan margin auto agar full width */
-    <div style={{ padding: "24px" }}>
-      
-      {/* HEADER PAGE */}
-      <div style={{ marginBottom: "32px" }}>
-        <h2 style={{ margin: 0, fontSize: "28px", color: "#0f172a", fontWeight: 700 }}>Stok Gudang Real-Time</h2>
-        <p style={{ margin: "8px 0 0 0", fontSize: "15px", color: "#64748b" }}>
-          Pantau ketersediaan barang dan lakukan penyesuaian (Inventory Adjustment) jika ada anomali fisik.
-        </p>
+    <div style={sharedStyles.pageWrapper}>
+      <div style={sharedStyles.headerContainer}>
+        <div>
+          <h1 style={sharedStyles.pageTitle}>
+            Stok Gudang Real-Time
+          </h1>
+          <p style={sharedStyles.pageSubtitle}>
+            Pantau ketersediaan barang dan lakukan penyesuaian (Inventory Adjustment) jika ada anomali fisik.
+          </p>
+        </div>
       </div>
 
-      {/* ERROR MESSAGE */}
       {sb.error && !sb.modalOpen && (
-        <div style={{ padding: "16px", background: "#fef2f2", color: "#991b1b", borderRadius: "8px", marginBottom: "24px", borderLeft: "4px solid #ef4444" }}>
+        <div style={{ padding: 16, background: "#fef2f2", color: "#991b1b", borderRadius: 10, marginBottom: 20, borderLeft: "4px solid #ef4444", fontSize: 13.5 }}>
           <strong>Pemberitahuan:</strong> {sb.error}
         </div>
       )}
 
-      {/* TABEL STOK MENGGUNAKAN SHARED DATATABLE */}
-      <div style={{ background: "#fff", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", overflow: "hidden", border: "1px solid #e2e8f0" }}>
-        <DataTable<StokBarang>
-          title="Data Ketersediaan Barang"
-          rows={sb.rows}
-          columns={columns}
-          rowKey={(r) => r.kodeBarang}
-          loading={sb.loading}
-          search={{ placeholder: "Cari nama atau kode barang...", keys: ["kodeBarang", "namaBarang"] }}
-          actionsHeader="Tindakan"
-          renderActions={(row) => (
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button 
-                style={{ 
-                  padding: "8px 16px", fontSize: "13px", fontWeight: 600, color: "#0369a1", 
-                  background: "#e0f2fe", border: "1px solid #bae6fd", borderRadius: "6px", cursor: "pointer",
-                  transition: "background 0.2s"
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = "#bae6fd"}
-                onMouseOut={(e) => e.currentTarget.style.background = "#e0f2fe"}
-                onClick={() => sb.openModal(row)}
-              >
-                ⚙️ Sesuaikan Stok
-              </button>
-            </div>
-          )}
-        />
-      </div>
+      <DataTable<StokBarang>
+        title="Data Ketersediaan Barang"
+        rows={sb.rows}
+        columns={columns}
+        rowKey={(r) => r.kodeBarang}
+        loading={sb.loading}
+        search={{ placeholder: "Cari nama atau kode barang...", keys: ["kodeBarang", "namaBarang"] }}
+        actionsHeader="Tindakan"
+        renderActions={(row) => (
+          <button
+            onClick={() => sb.openModal(row)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 14px", fontSize: 12.5, fontWeight: 600,
+              color: "#0369a1", background: "#e0f2fe",
+              border: "1.5px solid #bae6fd", borderRadius: 8,
+              cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.background = "#bae6fd"; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = "#e0f2fe"; }}
+          >
+            ⚙️ Sesuaikan
+          </button>
+        )}
+      />
 
-      {/* KOMPONEN MODAL YANG SUDAH DIPISAH */}
-      <StokAdjustmentModal 
+      <StokAdjustmentModal
         isOpen={sb.modalOpen}
         selectedStok={sb.selectedStok}
         tipe={sb.tipe}
@@ -97,7 +105,6 @@ export default function StokBarangPage() {
         onClose={sb.closeModal}
         onSave={sb.handleSave}
       />
-
     </div>
   );
 }

@@ -17,9 +17,9 @@ export default function AdminGudangLayout({ children }: { children: React.ReactN
   const sidebarItems = useMemo(
     () => [
       { 
-        label: "Katalog Barang", 
-        href: "/vendor/updateStatusBarang" as any, 
-        icon: SidebarIcons.Box 
+        label: "Update Status Purchase Order", 
+        href: "/adminGudang/salesOrder" as any, 
+        icon: SidebarIcons.Bag 
       },
     ],
     []

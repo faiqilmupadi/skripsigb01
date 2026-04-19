@@ -1,3 +1,4 @@
+// C:\faiq\skripsi\skripsigb01\app\features\vendorList\components\VendorPage.tsx
 "use client";
 
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { useVendorList } from "../hooks/useVendorList";
 import VendorForm from "./VendorForm";
 import VendorListForm from "./VendorListForm";
 import DeleteConfirmModal from "./DeleteConfirmModal";
-import styles from "@/styles/manajemenAkun.module.css";
+import { sharedStyles } from "@/app/components/shared/UIStyles";
 
 const vendorColumns: DataTableColumn<Vendor>[] = [
   { key: "kodeVendor", header: "Kode Vendor", width: 130, accessor: "kodeVendor" },
@@ -22,23 +23,21 @@ const vendorListColumns: DataTableColumn<VendorList>[] = [
   { key: "kodeBarang", header: "Kode Barang", width: 110, accessor: "kodeBarang" },
   { key: "namaBarang", header: "Nama Barang", accessor: "namaBarang" },
   { key: "warnaBarang", header: "Warna", width: 90, accessor: "warnaBarang" },
-  { 
-    key: "hargaDariVendor", 
-    header: "Harga", 
-    width: 120, 
-    accessor: "hargaDariVendor", 
+  {
+    key: "hargaDariVendor", header: "Harga", width: 130, accessor: "hargaDariVendor",
     render: (rowOrVal: any) => {
-      // Pengecekan aman: jika yang dilempar adalah objek baris (row), ambil hargaDariVendor
-      const harga = typeof rowOrVal === "object" && rowOrVal !== null 
-        ? rowOrVal.hargaDariVendor 
-        : rowOrVal;
-        
+      const harga = typeof rowOrVal === "object" && rowOrVal !== null ? rowOrVal.hargaDariVendor : rowOrVal;
       const num = Number(harga);
-      return isNaN(num) || !harga ? "Rp 0" : `Rp ${num.toLocaleString("id-ID")}`;
-    } 
+      return (
+        <span style={{ fontWeight: 700, color: "#0f172a" }}>
+          {isNaN(num) || !harga ? "Rp 0" : `Rp ${num.toLocaleString("id-ID")}`}
+        </span>
+      );
+    },
   },
   { key: "eum", header: "EuM", width: 80, align: "center", accessor: "eum" },
 ];
+
 const TABS: { key: ActiveTab; label: string }[] = [
   { key: "vendor", label: "Vendor" },
   { key: "vendorList", label: "Vendor List" },
@@ -50,33 +49,23 @@ export default function VendorPage() {
   const vendorList = useVendorList();
 
   return (
-    <div style={{ padding: "24px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+    <div style={sharedStyles.pageWrapper}>
+      <div style={sharedStyles.headerContainer}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Manajemen Vendor</h2>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--color-text-secondary)" }}>
+          <h1 style={sharedStyles.pageTitle}>Manajemen Vendor</h1>
+          <p style={sharedStyles.pageSubtitle}>
             Kelola data vendor dan daftar barang per vendor
           </p>
         </div>
 
-        <div style={{ display: "flex", background: "var(--color-background-secondary)", borderRadius: 8, padding: 4, gap: 4 }}>
+        {/* Tab switcher */}
+        <div style={sharedStyles.tabContainer}>
           {TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding: "6px 20px",
-                borderRadius: 6,
-                border: "none",
-                cursor: "pointer",
-                fontSize: 14,
-                fontWeight: activeTab === tab.key ? 500 : 400,
-                background: activeTab === tab.key ? "var(--color-background-primary)" : "transparent",
-                color: activeTab === tab.key ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                boxShadow: activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                transition: "all 0.15s ease",
-              }}
+              style={sharedStyles.tabButton(activeTab === tab.key)}
             >
               {tab.label}
             </button>
@@ -84,9 +73,9 @@ export default function VendorPage() {
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
         <button
-          className={styles.btnPrimary}
+          style={{ ...sharedStyles.btnBase, ...sharedStyles.btnPrimary }}
           type="button"
           onClick={activeTab === "vendor" ? vendor.openAdd : vendorList.openAdd}
         >
@@ -105,24 +94,30 @@ export default function VendorPage() {
             search={{ placeholder: "Cari kode / nama vendor…", keys: ["kodeVendor", "namaVendor", "alamat"] }}
             actionsHeader="Aksi"
             renderActions={(row) => (
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className={styles.btnGhost} type="button" style={{ padding: "4px 12px", fontSize: 13 }} onClick={() => vendor.openEdit(row)}>Edit</button>
-                <button className={styles.btnPrimary} type="button" style={{ padding: "4px 12px", fontSize: 13, background: "var(--color-background-danger)", color: "var(--color-text-danger)" }} onClick={() => vendor.openDelete(row)}>Hapus</button>
-              </div>
+              <>
+                <button
+                  type="button"
+                  style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionEdit }}
+                  onClick={() => vendor.openEdit(row)}
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  type="button"
+                  style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionDelete }}
+                  onClick={() => vendor.openDelete(row)}
+                >
+                  🗑️ Hapus
+                </button>
+              </>
             )}
           />
-
           <VendorForm
-            open={vendor.formOpen}
-            editTarget={vendor.editTarget}
-            form={vendor.form}
-            saving={vendor.saving}
-            error={vendor.error}
-            onClose={vendor.closeForm}
-            onSubmit={vendor.handleSave}
+            open={vendor.formOpen} editTarget={vendor.editTarget} form={vendor.form}
+            saving={vendor.saving} error={vendor.error}
+            onClose={vendor.closeForm} onSubmit={vendor.handleSave}
             onChange={(patch) => vendor.setForm((prev) => ({ ...prev, ...patch }))}
           />
-
           <DeleteConfirmModal
             open={!!vendor.deleteTarget}
             label={`${vendor.deleteTarget?.kodeVendor} — ${vendor.deleteTarget?.namaVendor}`}
@@ -144,28 +139,33 @@ export default function VendorPage() {
             search={{ placeholder: "Cari data…", keys: ["kodeVendor", "namaVendor", "kodeBarang", "namaBarang", "warnaBarang"] }}
             actionsHeader="Aksi"
             renderActions={(row) => (
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className={styles.btnGhost} type="button" style={{ padding: "4px 12px", fontSize: 13 }} onClick={() => vendorList.openEdit(row)}>Edit</button>
-                <button className={styles.btnPrimary} type="button" style={{ padding: "4px 12px", fontSize: 13, background: "var(--color-background-danger)", color: "var(--color-text-danger)" }} onClick={() => vendorList.openDelete(row)}>Hapus</button>
-              </div>
+              <>
+                <button
+                  type="button"
+                  style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionEdit }}
+                  onClick={() => vendorList.openEdit(row)}
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  type="button"
+                  style={{ ...sharedStyles.btnBase, ...sharedStyles.btnActionDelete }}
+                  onClick={() => vendorList.openDelete(row)}
+                >
+                  🗑️ Hapus
+                </button>
+              </>
             )}
           />
-
           <VendorListForm
-            open={vendorList.formOpen}
-            editTarget={vendorList.editTarget}
-            form={vendorList.form}
-            vendors={vendorList.vendors}
-            barangOptions={vendorList.barangOptions}
-            saving={vendorList.saving}
-            error={vendorList.error}
-            onClose={vendorList.closeForm}
-            onSubmit={vendorList.handleSave}
+            open={vendorList.formOpen} editTarget={vendorList.editTarget} form={vendorList.form}
+            vendors={vendorList.vendors} barangOptions={vendorList.barangOptions}
+            saving={vendorList.saving} error={vendorList.error}
+            onClose={vendorList.closeForm} onSubmit={vendorList.handleSave}
             onChange={(patch) => vendorList.setForm((prev) => ({ ...prev, ...patch }))}
             onKodeVendorChange={vendorList.handleKodeVendorChange}
             onKodeBarangChange={vendorList.handleKodeBarangChange}
           />
-
           <DeleteConfirmModal
             open={!!vendorList.deleteTarget}
             label={`${vendorList.deleteTarget?.kodeVendor} — ${vendorList.deleteTarget?.kodeBarang}`}

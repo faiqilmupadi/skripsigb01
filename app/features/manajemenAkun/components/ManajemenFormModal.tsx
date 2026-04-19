@@ -2,11 +2,58 @@
 
 import { useState, useEffect } from "react";
 import { TabType } from "../types";
+import Form from "@/app/components/shared/Form";
 
 type Props = {
-  open: boolean; type: TabType; initialData: any; saving: boolean; error: string;
-  onClose: () => void; onSave: (data: any) => void;
+  open: boolean;
+  type: TabType;
+  initialData: any;
+  saving: boolean;
+  error: string;
+  onClose: () => void;
+  onSave: (data: any) => void;
 };
+
+const inputStyle: React.CSSProperties = {
+  padding: "10px 13px",
+  fontSize: 13.5,
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  fontWeight: 500,
+  border: "1.5px solid #e2e8f0",
+  borderRadius: 10,
+  background: "#f8fafc",
+  color: "#0f172a",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+  transition: "border-color 0.15s, box-shadow 0.15s",
+};
+
+const inputDisabledStyle: React.CSSProperties = {
+  ...inputStyle,
+  background: "#f1f5f9",
+  color: "#94a3b8",
+  cursor: "not-allowed",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 12.5,
+  fontWeight: 700,
+  color: "#374151",
+  letterSpacing: 0.2,
+  textTransform: "uppercase" as const,
+  marginBottom: 6,
+  display: "block",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function ManajemenFormModal({ open, type, initialData, saving, error, onClose, onSave }: Props) {
   const [form, setForm] = useState<any>({});
@@ -16,82 +63,151 @@ export default function ManajemenFormModal({ open, type, initialData, saving, er
   }, [open, initialData, type]);
 
   if (!open) return null;
+
   const isEdit = !!initialData;
   const isOwner = isEdit && initialData?.roleUser === "Owner";
 
-  return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
-      <div style={{ background: "white", padding: 32, borderRadius: 24, width: "100%", maxWidth: 500, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", maxHeight: "90vh", overflowY: "auto" }}>
-        <h2 style={{ margin: "0 0 24px 0" }}>{isEdit ? "Edit" : "Tambah"} {type === "admin" ? "Akun" : "Vendor"}</h2>
-        
-        {error && <div style={{ padding: 12, background: "#fef2f2", color: "#991b1b", borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{error}</div>}
+  const isAdmin = type === "admin";
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {type === "admin" ? (
-            <>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>User ID</label>
-                <input disabled={isEdit} style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1", background: isEdit ? "#f1f5f9" : "white" }} value={form.userId || ""} onChange={e => setForm({...form, userId: e.target.value})} placeholder="Contoh: U001" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Username (Login)</label>
-                <input style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.username || ""} onChange={e => setForm({...form, username: e.target.value})} placeholder="fatih123" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Email</label>
-                <input type="email" style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.email || ""} onChange={e => setForm({...form, email: e.target.value})} placeholder="email@contoh.com" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Nama Lengkap</label>
-                <input style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.namaUser || ""} onChange={e => setForm({...form, namaUser: e.target.value})} placeholder="Nama Lengkap Admin/Vendor" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Role Akses</label>
-                <select disabled={isOwner} style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1", background: isOwner ? "#f1f5f9" : "white" }} value={form.roleUser || "Admin"} onChange={e => setForm({...form, roleUser: e.target.value})}>
-                  {isOwner ? (
-                    <option value="Owner">Owner (Tidak bisa diubah)</option>
-                  ) : (
-                    <>
-                      <option value="Admin">Admin</option>
-                      <option value="Vendor">Vendor</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Password {isEdit && "(Kosongkan jika tidak diubah)"}</label>
-                <input type="password" style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.password || ""} onChange={e => setForm({...form, password: e.target.value})} placeholder="******" />
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Kode Vendor</label>
-                <input disabled={isEdit} style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1", background: isEdit ? "#f1f5f9" : "white" }} value={form.kodeVendor || ""} onChange={e => setForm({...form, kodeVendor: e.target.value})} placeholder="Contoh: VND01" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Nama Perusahaan / Vendor</label>
-                <input style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.namaVendor || ""} onChange={e => setForm({...form, namaVendor: e.target.value})} placeholder="PT. Sukses Bersama" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Akun Terkait (User ID)</label>
-                <input style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1" }} value={form.userId || ""} onChange={e => setForm({...form, userId: e.target.value})} placeholder="Masukkan ID User dari tab Akun (opsional)" />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Alamat Lengkap</label>
-                <textarea rows={3} style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #cbd5e1", resize: "none" }} value={form.alamat || ""} onChange={e => setForm({...form, alamat: e.target.value})} placeholder="Alamat lengkap perusahaan..." />
-              </div>
-            </>
+  return (
+    <Form
+      open={open}
+      title={`${isEdit ? "Edit" : "Tambah"} ${isAdmin ? "Akun Pengguna" : "Data Vendor"}`}
+      subtitle={isAdmin ? "Kelola akun dan hak akses sistem" : "Kelola data perusahaan vendor"}
+      icon={isAdmin ? "👤" : "🏢"}
+      onClose={onClose}
+      onSubmit={() => onSave(form)}
+      saving={saving}
+      submitText={isEdit ? "Simpan Perubahan" : isAdmin ? "Buat Akun" : "Tambah Vendor"}
+      error={error}
+      maxWidth="500px"
+    >
+      {isAdmin ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Row 1: User ID + Username */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="User ID">
+              <input
+                style={isEdit ? inputDisabledStyle : inputStyle}
+                value={form.userId || ""}
+                onChange={(e) => setForm({ ...form, userId: e.target.value })}
+                placeholder="U001"
+                disabled={isEdit}
+              />
+            </Field>
+            <Field label="Username (Login)">
+              <input
+                style={inputStyle}
+                value={form.username || ""}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                placeholder="fatih123"
+              />
+            </Field>
+          </div>
+
+          {/* Row 2: Nama Lengkap */}
+          <Field label="Nama Lengkap">
+            <input
+              style={inputStyle}
+              value={form.namaUser || ""}
+              onChange={(e) => setForm({ ...form, namaUser: e.target.value })}
+              placeholder="Nama Lengkap Admin / Vendor"
+            />
+          </Field>
+
+          {/* Row 3: Email */}
+          <Field label="Email">
+            <input
+              type="email"
+              style={inputStyle}
+              value={form.email || ""}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="email@contoh.com"
+            />
+          </Field>
+
+          {/* Row 4: Role + Password */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Role Akses">
+              <select
+                style={isOwner ? { ...inputDisabledStyle, appearance: "none" } : { ...inputStyle, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 34, cursor: "pointer" }}
+                value={form.roleUser || "Admin"}
+                onChange={(e) => setForm({ ...form, roleUser: e.target.value })}
+                disabled={isOwner}
+              >
+                {isOwner ? (
+                  <option value="Owner">Owner</option>
+                ) : (
+                  <>
+                    <option value="Admin">Admin</option>
+                    <option value="Vendor">Vendor</option>
+                  </>
+                )}
+              </select>
+            </Field>
+
+            <Field label={isEdit ? "Password (kosongkan jika tidak diubah)" : "Password"}>
+              <input
+                type="password"
+                style={inputStyle}
+                value={form.password || ""}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••"
+              />
+            </Field>
+          </div>
+
+          {isOwner && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#fef9c3", border: "1.5px solid #fde68a", borderRadius: 10, fontSize: 12.5, color: "#92400e", fontWeight: 600 }}>
+              🔒 Role Owner tidak dapat diubah dan akun ini tidak bisa dihapus.
+            </div>
           )}
         </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Row 1: Kode Vendor */}
+          <Field label="Kode Vendor">
+            <input
+              style={isEdit ? inputDisabledStyle : inputStyle}
+              value={form.kodeVendor || ""}
+              onChange={(e) => setForm({ ...form, kodeVendor: e.target.value })}
+              placeholder="VND01"
+              disabled={isEdit}
+            />
+          </Field>
 
-        <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ padding: "10px 16px", background: "transparent", border: "none", cursor: "pointer", fontWeight: 600, color: "#64748b" }}>Batal</button>
-          <button onClick={() => onSave(form)} disabled={saving} style={{ padding: "10px 20px", background: "#2563eb", color: "white", border: "none", borderRadius: 8, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
-            {saving ? "Menyimpan..." : "Simpan Data"}
-          </button>
+          {/* Row 2: Nama Vendor */}
+          <Field label="Nama Perusahaan / Vendor">
+            <input
+              style={inputStyle}
+              value={form.namaVendor || ""}
+              onChange={(e) => setForm({ ...form, namaVendor: e.target.value })}
+              placeholder="PT. Sukses Bersama"
+            />
+          </Field>
+
+          {/* Row 3: Akun Terkait */}
+          <Field label="Akun Terkait (User ID)">
+            <input
+              style={inputStyle}
+              value={form.userId || ""}
+              onChange={(e) => setForm({ ...form, userId: e.target.value })}
+              placeholder="ID User dari tab Akun (opsional)"
+            />
+          </Field>
+
+          {/* Row 4: Alamat */}
+          <Field label="Alamat Lengkap">
+            <textarea
+              style={{ ...inputStyle, resize: "vertical", minHeight: 80, lineHeight: 1.55 }}
+              value={form.alamat || ""}
+              onChange={(e) => setForm({ ...form, alamat: e.target.value })}
+              placeholder="Jl. Sudirman No. 1, Jakarta Selatan..."
+              rows={3}
+            />
+          </Field>
         </div>
-      </div>
-    </div>
+      )}
+    </Form>
   );
 }
