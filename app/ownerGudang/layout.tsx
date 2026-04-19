@@ -1,4 +1,3 @@
-// app/ownerGudang/layout.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -8,15 +7,29 @@ import styles from "@/styles/dashboardAnalisis.module.css";
 import AppSidebar, { SidebarIcons } from "@/app/components/shared/AppSidebar";
 import { logout } from "@/app/services/logoutService";
 
-export default function ownerGudangLayout({ children }: { children: React.ReactNode }) {
+// Pastikan huruf depan komponen adalah huruf Kapital (OwnerGudangLayout)
+export default function OwnerGudangLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
+  // Ini adalah daftar menu yang akan ditampilkan di sidebar
   const sidebarItems = useMemo(
     () => [
-      { label: "Dashboard Analisis", href: "/ownerGudang/dashboardAnalisis" as const, icon: SidebarIcons.Home },
-      { label: "Manajemen Akun", href: "/ownerGudang/manajemenAkun" as const, icon: SidebarIcons.User },
-      { label: "HistoryOrder", href: "/ownerGudang/historyOrder" as const, icon: SidebarIcons.History },
+      { 
+        label: "Dashboard Analisis", 
+        href: "/ownerGudang/dashboardAnalisis" as any, 
+        icon: SidebarIcons.Home 
+      },
+      { 
+        label: "Manajemen Akun", 
+        href: "/ownerGudang/manajemenAkun" as any, 
+        icon: SidebarIcons.User 
+      },
+      { 
+        label: "Riwayat Transaksi", 
+        href: "/ownerGudang/riwayatTransaksi" as any, 
+        icon: SidebarIcons.History 
+      },
     ],
     []
   );
@@ -24,12 +37,13 @@ export default function ownerGudangLayout({ children }: { children: React.ReactN
   const onLogout = async () => {
     await logout();
     setLogoutOpen(false);
+    sessionStorage.clear(); // Membersihkan sisa memori notifikasi ROP jika ada
     router.replace("/login");
   };
 
   return (
     <div className={styles.shell}>
-      <AppSidebar title="Kepala Gudang" items={sidebarItems} onLogoutClick={() => setLogoutOpen(true)} />
+      <AppSidebar title="Owner Gudang" items={sidebarItems} onLogoutClick={() => setLogoutOpen(true)} />
 
       <main className={styles.main}>{children}</main>
 

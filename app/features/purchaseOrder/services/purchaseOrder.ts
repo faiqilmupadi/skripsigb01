@@ -65,7 +65,6 @@ export async function getPurchaseOrdersGrouped(): Promise<PurchaseOrderGroup[]> 
   return Object.values(grouped);
 }
 
-// [REVISI] Menarik data Transform dan Stok Dasar untuk Kalkulasi di Form
 export async function getPOOptions() {
   const vendors = await dbQuery<VendorOption>(`SELECT kodeVendor, namaVendor FROM vendor ORDER BY namaVendor ASC`);
   const vendorLists = await dbQuery<VendorListOption>(`
@@ -84,13 +83,45 @@ export async function createPurchaseOrder(data: { kodeVendor: string, namaVendor
   const nomorPO = `PO-${dateStr}-${randomStr}`;
   const tanggalHariIni = new Date().toISOString().slice(0, 10);
   const status = "Sudah Dipesan"; 
-  const catatanAwal = "-"; 
+  const catatanAwal = "Menunggu Kedatangan Barang"; 
+  const movementType = 'POTP123';
+
+  // Ambil referensi konversi untuk menghitung estimasi yang akan dimasukkan ke movements
+  const rules = await dbQuery<any>(`SELECT * FROM transformEum`);
+  const allStoks = await dbQuery<any>(`SELECT kodeBarang, eum FROM stokBarang`);
 
   for (const item of data.items) {
+    // 1. Insert ke tabel purchaseOrder
     await dbExec(
       `INSERT INTO purchaseOrder (nomorPurchaseOrder, kodeBarang, kodeVendor, namaBarang, namaVendor, qty, eum, status, totalHarga, catatan, tanggal, userId) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [nomorPO, item.kodeBarang, data.kodeVendor, item.namaBarang, data.namaVendor, item.qty, item.eum, status, item.totalHarga, catatanAwal, tanggalHariIni, data.userId]
+    );
+
+    // 2. Kalkulasi ekspektasi Pcs untuk buku besar (movements)
+    const targetEum = allStoks.find((s: any) => s.kodeBarang === item.kodeBarang)?.eum || item.eum;
+    const itemRules = rules.filter((t: any) => t.kodeBarang === item.kodeBarang);
+    let expectedQty = item.qty;
+    let expectedEum = item.eum;
+    let maxLoop = 5;
+
+    while (expectedEum.toLowerCase() !== targetEum.toLowerCase() && maxLoop > 0) {
+      const rule = itemRules.find((r: any) => r.eumFrom.toLowerCase() === expectedEum.toLowerCase());
+      if (!rule) break; 
+      expectedQty = (expectedQty / rule.qtyFrom) * rule.qtyTo;
+      expectedEum = rule.eumTo;
+      maxLoop--;
+    }
+
+    const detailBarang = await dbQuery<any>(`SELECT warna, volume FROM barang WHERE kodeBarang = ?`, [item.kodeBarang]);
+    const warna = detailBarang[0]?.warna || "-";
+    const volume = detailBarang[0]?.volume || null;
+
+    // 3. [REVISI] INSERT ke movements sebagai Tracking awal (Status: Sudah Dipesan)
+    await dbExec(
+      `INSERT INTO movements (movementType, nomorPurchaseOrder, kodeBarang, namaBarang, warna, volume, quantity, eum, totalHarga, catatan, userName, postingDate, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [movementType, nomorPO, item.kodeBarang, item.namaBarang, warna, volume, expectedQty, expectedEum, item.totalHarga, catatanAwal, data.userId, tanggalHariIni, status]
     );
   }
 }
@@ -102,31 +133,31 @@ export async function receivePurchaseOrder(
   const items = await dbQuery<any>(`SELECT * FROM purchaseOrder WHERE nomorPurchaseOrder = ?`, [nomorPO]);
   if (items.length === 0) throw new Error("Purchase Order tidak ditemukan.");
 
+  // 1. Update status di tabel purchaseOrder menjadi Selesai
   await dbExec(`UPDATE purchaseOrder SET status = 'Selesai', catatan = ? WHERE nomorPurchaseOrder = ?`, [catatan || "-", nomorPO]);
 
   const tanggalHariIni = new Date().toISOString().slice(0, 10);
-  const movementType = 'POTP123'; 
 
+  // 2. Loop barang yang diterima
   for (const item of items) {
     const receivedData = itemsReceived.find(ir => ir.kodeBarang === item.kodeBarang);
     if (!receivedData) continue;
     const qtyAktualBase = receivedData.qtyDiterima;
 
     if (qtyAktualBase > 0) {
-      const detailBarang = await dbQuery<any>(`SELECT warna, volume FROM barang WHERE kodeBarang = ?`, [item.kodeBarang]);
-      const warna = detailBarang[0]?.warna || "-";
-      const volume = detailBarang[0]?.volume || null;
-
       const hargaSatuanAsli = item.totalHarga / item.qty;
       const hargaSatuanBase = hargaSatuanAsli / receivedData.conversionFactor;
       const totalHargaAktual = hargaSatuanBase * qtyAktualBase;
 
+      // 3. [REVISI] UPDATE data di movements yang tadinya 'Sudah Dipesan' menjadi 'Selesai' dan perbarui fisik aktualnya
       await dbExec(
-        `INSERT INTO movements (movementType, nomorPurchaseOrder, kodeBarang, namaBarang, warna, volume, quantity, eum, totalHarga, catatan, userName, postingDate) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [movementType, nomorPO, item.kodeBarang, item.namaBarang, warna, volume, qtyAktualBase, receivedData.eum, totalHargaAktual, catatan || "-", userId, tanggalHariIni]
+        `UPDATE movements 
+         SET quantity = ?, eum = ?, totalHarga = ?, catatan = ?, userName = ?, postingDate = ?, status = 'Selesai' 
+         WHERE nomorPurchaseOrder = ? AND kodeBarang = ?`,
+        [qtyAktualBase, receivedData.eum, totalHargaAktual, catatan || "Barang Diterima", userId, tanggalHariIni, nomorPO, item.kodeBarang]
       );
 
+      // 4. Tambahkan ke master stok gudang
       await dbExec(`UPDATE stokBarang SET barangSiap = barangSiap + ? WHERE kodeBarang = ?`, [qtyAktualBase, item.kodeBarang]);
     }
   }

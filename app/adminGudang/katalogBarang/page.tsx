@@ -3,6 +3,6 @@ import { katalogBarangService } from "@/app/features/katalogBarang/services/kata
 
 export default async function Page() {
   const colorOptions = await katalogBarangService.getColors();
-
+  
   return <KatalogBarangClient colorOptions={colorOptions} />;
 }
