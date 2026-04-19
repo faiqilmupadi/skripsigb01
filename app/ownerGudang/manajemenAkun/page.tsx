@@ -1,8 +1,9 @@
+import ManajemenAkunPage from "@/app/features/manajemenAkun/components/ManajemenAkunPage";
 
-// import ManajemenAkunClient from "@/app/features/manajemenAkun/components/ManajemenAkunClient";
-
-// export const dynamic = "force-dynamic";
-
-// export default function Page() {
-//   return <ManajemenAkunClient />;
-// }
+export default function Page() {
+  return (
+    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+      <ManajemenAkunPage />
+    </div>
+  );
+}
