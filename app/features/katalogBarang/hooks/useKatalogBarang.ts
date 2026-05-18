@@ -30,10 +30,10 @@ export function useKatalogBarang() {
       await katalogBarangClient.create(payload);
       await refresh();
     },
-  async update(kodeBarang: string, payload: UpdateBarangInput) {
-    await katalogBarangClient.update(kodeBarang, payload);
-    await refresh();
-  },
+    async update(kodeBarang: string, payload: UpdateBarangInput) {
+      await katalogBarangClient.update(kodeBarang, payload);
+      await refresh();
+    },
     async remove(kodeBarang: string) {
       await katalogBarangClient.remove(kodeBarang);
       await refresh();

@@ -12,6 +12,7 @@ export type KatalogBarangRow = {
   namaBarang: string;
   leadtime: number;
   safetyStock: number;
+  hargaBarang: number | null; // <-- NEW
   volume: number | null;
   satuan: string | null;
   jenisBarang: string | null;
@@ -25,6 +26,7 @@ export type CreateBarangInput = {
   namaBarang: string;
   leadtime: number;
   safetyStock: number;
+  hargaBarang: number; // <-- NEW
   volume?: number | null;
   satuan?: string | null;
   jenisBarang?: string | null;
@@ -49,14 +51,13 @@ const TransformSchema = z.object({
   eumTo: z.string().trim().min(1),
 });
 
-// 2. Gunakan di dalam CreateBarangSchema
 export const CreateBarangSchema = z.object({
   kodeBarang: z.string().trim().min(1, "Kode wajib diisi"),
   namaBarang: z.string().trim().min(1, "Nama wajib diisi"),
   leadtime: z.coerce.number().min(0),
   safetyStock: z.coerce.number().min(0),
+  hargaBarang: z.coerce.number().min(0, "Harga Jual tidak boleh negatif"), // <-- NEW
   baseOfMeasure: z.string().trim().min(1, "Satuan dasar wajib diisi"),
   warna: z.string().optional().nullable(),
-  // INI KUNCINYA: transforms harus array
   transforms: z.array(TransformSchema).optional(), 
 });

@@ -26,6 +26,7 @@ export default function BarangFormModal({ open, mode, initial, colorOptions, onC
     namaBarang: "",
     baseOfMeasure: "",
     warna: "",
+    hargaBarang: "",
     leadtime: "",
     safetyStock: "",
   });
@@ -44,6 +45,7 @@ export default function BarangFormModal({ open, mode, initial, colorOptions, onC
         namaBarang: initial.namaBarang,
         baseOfMeasure: initial.baseOfMeasure || "",
         warna: initial.warna || "",
+        hargaBarang: String(initial.hargaBarang || ""),
         leadtime: String(initial.leadtime || ""),
         safetyStock: String(initial.safetyStock || ""),
       });
@@ -59,7 +61,7 @@ export default function BarangFormModal({ open, mode, initial, colorOptions, onC
           : [{ qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]
       );
     } else {
-      setFormData({ kodeBarang: "", namaBarang: "", baseOfMeasure: "", warna: "", leadtime: "", safetyStock: "" });
+      setFormData({ kodeBarang: "", namaBarang: "", baseOfMeasure: "", warna: "", hargaBarang: "", leadtime: "", safetyStock: "" });
       setTransforms([{ qtyFrom: "", eumFrom: "", qtyTo: "", eumTo: "" }]);
     }
   }, [open, mode, initial]);
@@ -155,6 +157,20 @@ export default function BarangFormModal({ open, mode, initial, colorOptions, onC
               </option>
             ))}
           </select>
+        </div>
+
+        {/* --- FIELD HARGA JUAL BARU --- */}
+        <div className="fm-field">
+          <label className="fm-label">Harga Jual (Rp)</label>
+          <input
+            className="fm-input"
+            type="number"
+            value={formData.hargaBarang}
+            onChange={set("hargaBarang")}
+            placeholder="Contoh: 150000"
+            min="0"
+          />
+          <span className="fm-hint">Harga jual dasar barang ini</span>
         </div>
       </div>
 
